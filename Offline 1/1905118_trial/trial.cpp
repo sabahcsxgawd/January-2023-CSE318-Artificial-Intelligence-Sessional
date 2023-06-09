@@ -2,6 +2,8 @@
 using namespace std;
 
 
+// parMove values :-> up : 1, down : 2, right : 3, left : 4
+
 class Board {
 
 private:
@@ -77,23 +79,66 @@ public:
     }
 
     int getInversionCount() {
-
+        set<int> s;
+        int invCnt = 0;
+        for(int i = this->gridSize - 1; i >= 0; i--) {
+            for(int j = this->gridSize - 1; j >= 0; j--) {
+                if(this->board[i][j] != 0) {
+                    s.insert(this->board[i][j]);
+                    auto it = s.lower_bound(this->board[i][j]);
+                    invCnt += distance(s.begin(), it);
+                }
+            }
+        }
+        return invCnt;
     }
 
     bool canUp() {
-
+        if(this->parMove == 2) {
+            return false;
+        }
+        else if((this->getBlankTilePos() / this->gridSize) <= 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     bool canDown() {
-        
+        if(this->parMove == 1) {
+            return false;
+        }
+        else if((this->getBlankTilePos() / this->gridSize) >= this->gridSize - 1) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     bool canRight() {
-        
+        if(this->parMove == 4) {
+            return false;
+        }
+        else if((this->getBlankTilePos() % this->gridSize) >= this->gridSize - 1) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     bool canLeft() {
-        
+        if(this->parMove == 3) {
+            return false;
+        }
+        else if((this->getBlankTilePos() % this->gridSize) <= 0) {
+            return false;
+        }
+        else {
+            return true;
+        }
     }
 
     void setParMove(int parMove) {
@@ -101,7 +146,12 @@ public:
     }
 
     void printBoard() {
-
+        for(int i = 0; i < this->gridSize; i++) {
+            for(int j = 0; j < this->gridSize; j++) {
+                cout << this->board[i][j] << ' ';
+            }
+            cout << '\n';
+        }
     }
 
 };

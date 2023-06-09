@@ -8,19 +8,20 @@ class Board {
 
 private:
     vector<vector<int>> board;
-    int gridSize, gVal, hVal, fVal, parMove;
+    int gridSize, gVal, hVal, fVal, hFlag, parMove;
     shared_ptr<Board> parent;
 
 
 public:
-    Board(int gridSize, vector<vector<int>> board, shared_ptr<Board> parent, int hFlag) {
+    Board(int gridSize, vector<vector<int>> board, shared_ptr<Board> parent, int hFlag, int parMove) {
         this->gridSize = gridSize;
         this->board = board;
         this->parent = parent;
+        this->hFlag = hFlag;
+        this->parMove = parMove;
 
         if(this->parent == nullptr) {
             this->gVal = 0;
-            this->parMove = -1;
         }
         else {
             this->gVal = parent->gVal + 1;
@@ -141,10 +142,6 @@ public:
         }
     }
 
-    void setParMove(int parMove) {
-        this->parMove = parMove;
-    }
-
     void printBoard() {
         for(int i = 0; i < this->gridSize; i++) {
             for(int j = 0; j < this->gridSize; j++) {
@@ -152,6 +149,38 @@ public:
             }
             cout << '\n';
         }
+    }
+
+    shared_ptr<Board> getUpNeighbour() {
+        vector<vector<int>> temp = this->board;
+        int blank_i = this->getBlankTilePos() / this->gridSize;
+        int blank_j = this->getBlankTilePos() % this->gridSize;
+        swap(temp[blank_i][blank_j], temp[blank_i - 1][blank_j]);
+        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 1));
+    }
+
+    shared_ptr<Board> getDownNeighbour() {
+        vector<vector<int>> temp = this->board;
+        int blank_i = this->getBlankTilePos() / this->gridSize;
+        int blank_j = this->getBlankTilePos() % this->gridSize;
+        swap(temp[blank_i][blank_j], temp[blank_i + 1][blank_j]);
+        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 2));
+    }
+
+    shared_ptr<Board> getRightNeighbour() {
+        vector<vector<int>> temp = this->board;
+        int blank_i = this->getBlankTilePos() / this->gridSize;
+        int blank_j = this->getBlankTilePos() % this->gridSize;
+        swap(temp[blank_i][blank_j], temp[blank_i][blank_j + 1]);
+        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 3));
+    }
+
+    shared_ptr<Board> getLeftNeighbour() {
+        vector<vector<int>> temp = this->board;
+        int blank_i = this->getBlankTilePos() / this->gridSize;
+        int blank_j = this->getBlankTilePos() % this->gridSize;
+        swap(temp[blank_i][blank_j - 1], temp[blank_i][blank_j]);
+        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 4));
     }
 
 };

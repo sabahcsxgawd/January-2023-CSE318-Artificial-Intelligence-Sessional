@@ -26,7 +26,7 @@ public:
         }
         else
         {
-            this->gVal = parent->gVal + 1;
+            this->gVal = this->parent->gVal + 1;
         }
 
         if (hFlag == 0)
@@ -41,9 +41,12 @@ public:
         this->fVal = this->gVal + this->hVal;
     }
 
-    int getGVal()
-    {
-        return this->gVal;
+    vector<vector<int>> getBoard() {
+        return this->board;
+    }
+
+    Board* getParent() {
+        return this->parent;
     }
 
     int getFVal() {
@@ -59,7 +62,7 @@ public:
             {
                 if (this->board[i][j] != 0)
                 {
-                    if (this->board[i][j] != (this->gridSize * i + j) + 1)
+                    if (this->board[i][j] != ((this->gridSize * i + j) + 1))
                     {
                         hammingDistance++;
                     }
@@ -239,7 +242,7 @@ class Compare
 {
 public:
     bool operator() (Board *a, Board *b) {
-        return a->getFVal() < b->getFVal();
+        return a->getFVal() > b->getFVal();
     }
 };
 
@@ -264,6 +267,21 @@ private:
             }
         }
         this->goalBoard[this->gridSize - 1][this->gridSize - 1] = 0;
+    }
+
+    void freeUpMemory()
+    {
+        for (Board *x : this->boards)
+        {
+            delete x;
+        }
+    }
+
+    void printMoves(Board* top) {
+        if(top->getParent() != nullptr) {
+            this->printMoves(top->getParent());
+        }
+        top->printBoard();
     }
 
 public:
@@ -292,15 +310,40 @@ public:
 
     void search()
     {
-    }
-
-    void freeUpMemory()
-    {
-        for (Board *x : this->boards)
-        {
-            delete x;
+        while(!this->pq.empty()) {
+            Board *top = this->pq.top();
+            this->pq.pop();
+            if(top->getBoard() == this->goalBoard) {
+                cout << "Minimum number of moves = " << top->getFVal() << "\n\n";
+                this->printMoves(top);
+                this->freeUpMemory();
+                break;
+            }
+            else {
+                Board *temp;
+                if(top->canUp()) {
+                    temp = top->getUpNeighbour();
+                    this->boards.insert(temp);
+                    this->pq.push(temp);
+                }
+                if(top->canDown()) {
+                    temp = top->getDownNeighbour();
+                    this->boards.insert(temp);
+                    this->pq.push(temp);
+                }
+                if(top->canRight()) {
+                    temp = top->getRightNeighbour();
+                    this->boards.insert(temp);
+                    this->pq.push(temp);
+                }
+                if(top->canLeft()) {
+                    temp = top->getLeftNeighbour();
+                    this->boards.insert(temp);
+                    this->pq.push(temp);
+                }
+            }
         }
-    }
+    }   
 };
 
 int main()
@@ -327,9 +370,14 @@ int main()
         }
     }
 
-    AStar graph(n, v, 0);
-
-    graph.freeUpMemory();
+    AStar graph(n, v, 1);
+    
+    if(graph.isSolvable()) {
+        graph.search();
+    }
+    else {
+        cout << "Unsolvable\n";
+    }
 
     return 0;
 }

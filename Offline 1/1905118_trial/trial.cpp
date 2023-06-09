@@ -9,11 +9,11 @@ class Board {
 private:
     vector<vector<int>> board;
     int gridSize, gVal, hVal, fVal, hFlag, parMove;
-    shared_ptr<Board> parent;
+    Board *parent;
 
 
 public:
-    Board(int gridSize, vector<vector<int>> board, shared_ptr<Board> parent, int hFlag, int parMove) {
+    Board(int gridSize, vector<vector<int>> board, Board *parent, int hFlag, int parMove) {
         this->gridSize = gridSize;
         this->board = board;
         this->parent = parent;
@@ -77,6 +77,7 @@ public:
                 }
             }
         }
+        return -1;
     }
 
     int getInversionCount() {
@@ -149,43 +150,56 @@ public:
             }
             cout << '\n';
         }
+        cout << '\n';
     }
 
-    shared_ptr<Board> getUpNeighbour() {
+    Board* getUpNeighbour() {
         vector<vector<int>> temp = this->board;
         int blank_i = this->getBlankTilePos() / this->gridSize;
         int blank_j = this->getBlankTilePos() % this->gridSize;
         swap(temp[blank_i][blank_j], temp[blank_i - 1][blank_j]);
-        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 1));
+        return (new Board(this->gridSize, temp, this, this->hFlag, 1));
     }
 
-    shared_ptr<Board> getDownNeighbour() {
+    Board* getDownNeighbour() {
         vector<vector<int>> temp = this->board;
         int blank_i = this->getBlankTilePos() / this->gridSize;
         int blank_j = this->getBlankTilePos() % this->gridSize;
         swap(temp[blank_i][blank_j], temp[blank_i + 1][blank_j]);
-        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 2));
+        return (new Board(this->gridSize, temp, this, this->hFlag, 2));
     }
 
-    shared_ptr<Board> getRightNeighbour() {
+    Board* getRightNeighbour() {
         vector<vector<int>> temp = this->board;
         int blank_i = this->getBlankTilePos() / this->gridSize;
         int blank_j = this->getBlankTilePos() % this->gridSize;
         swap(temp[blank_i][blank_j], temp[blank_i][blank_j + 1]);
-        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 3));
+        return (new Board(this->gridSize, temp, this, this->hFlag, 3));
     }
 
-    shared_ptr<Board> getLeftNeighbour() {
+    Board* getLeftNeighbour() {
         vector<vector<int>> temp = this->board;
         int blank_i = this->getBlankTilePos() / this->gridSize;
         int blank_j = this->getBlankTilePos() % this->gridSize;
         swap(temp[blank_i][blank_j - 1], temp[blank_i][blank_j]);
-        return make_shared<Board>(new Board(this->gridSize, temp, make_shared<Board>(this), this->hFlag, 4));
+        return (new Board(this->gridSize, temp, this, this->hFlag, 4));
     }
 
 };
 
+class AStar {
 
+private:
+    Board* initialBoard;
+    vector<vector<int>> goalBoard;
+    int gridSize;
+    set<Board*> boards;
+    // need another set / priority queue
+
+public:
+
+
+};
 
 int main() {
 
@@ -208,6 +222,7 @@ int main() {
         }
     }
 
+    Board *initialBoard = new Board(n, v, nullptr, 0, -1);
     
     return 0;
 }

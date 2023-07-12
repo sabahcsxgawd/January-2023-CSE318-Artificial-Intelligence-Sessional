@@ -1,5 +1,6 @@
 #pragma once
 
+// TODO remove when submitting
 #include <bits/stdc++.h>
 
 class GameState {
@@ -10,7 +11,7 @@ private:
     GameState* parent;
 
 public:
-    GameState(bool whichPlayer, uint_fast8_t state[], GameState* parent) {
+    GameState(bool whichPlayer, uint8_t state[], GameState* parent) {
         this->whichPlayer = whichPlayer;
         for(int i = 0; i < 14; i++) {
             this->state[i] = state[i];

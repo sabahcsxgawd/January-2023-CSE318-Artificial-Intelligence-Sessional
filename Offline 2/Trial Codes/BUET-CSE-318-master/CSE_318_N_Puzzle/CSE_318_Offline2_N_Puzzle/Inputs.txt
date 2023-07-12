@@ -1,0 +1,288 @@
+3
+  1 3
+4 2 5
+7 8 6
+=>4
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 1 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 1 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 0 ms
+
+3
+2 1 3
+5   4
+7 8 6
+=>14
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 334
+Number of Explored Nodes = 559
+Time required = 21 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 129
+Number of Explored Nodes = 212
+Time required = 4 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 83
+Number of Explored Nodes = 137
+Time required = 3 ms
+
+3
+2 1 3
+5 4
+7 8 6
+=>15
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 372
+Number of Explored Nodes = 616
+Time required = 26 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 119
+Number of Explored Nodes = 197
+Time required = 4 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 111
+Number of Explored Nodes = 190
+Time required = 6 ms
+
+3
+2 1 3
+4   5
+7 8 6
+=>Unsolvable
+
+
+3
+1 2 3
+8   4
+7 6 5
+=>Unsolvable
+
+
+3
+1 2 3
+5 6
+7 8 4
+=>13
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 153
+Number of Explored Nodes = 256
+Time required = 9 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 58
+Number of Explored Nodes = 102
+Time required = 2 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 57
+Number of Explored Nodes = 103
+Time required = 4 ms
+
+3
+  2 3
+1 4 5
+8 7 6
+=>Unsolvable
+
+
+3
+  2 3
+1 4 5
+7 8 6
+=>4
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 1 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 2 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 5
+Number of Explored Nodes = 10
+Time required = 2 ms
+
+3
+2   3
+1 4 5
+7 8 6
+=>5
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 6
+Number of Explored Nodes = 12
+Time required = 2 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 6
+Number of Explored Nodes = 12
+Time required = 1 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 6
+Number of Explored Nodes = 12
+Time required = 1 ms
+
+
+3
+1 2 3
+4 5 6
+8 7
+=>Unsolvable
+
+
+3
+1 7
+3 8 4
+2 6 5
+=>28
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 54474
+Number of Explored Nodes = 74566
+Time required = 14321 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 4525
+Number of Explored Nodes = 6981
+Time required = 108 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 1773
+Number of Explored Nodes = 2778
+Time required = 36 ms
+
+3
+7 4 8
+6 1
+5 2 3
+=>25
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 19502
+Number of Explored Nodes = 29331
+Time required = 3668 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 1156
+Number of Explored Nodes = 1820
+Time required = 23 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 456
+Number of Explored Nodes = 737
+Time required = 7 ms
+
+3
+7 2 4
+6   5
+8 3 1
+=>Unsolvable
+
+3
+  3 8
+4 1 7
+2 6 5
+=>24
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 12639
+Number of Explored Nodes = 19428
+Time required = 1818 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 1510
+Number of Explored Nodes = 2366
+Time required = 47 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 338
+Number of Explored Nodes = 535
+Time required = 8 ms
+
+4
+15 2 1 12
+8 5 6 11
+4 9 10 7
+3 14 13
+=>Unsolvable
+
+
+4
+1 2 3 4
+5 6 7 8
+9 10 11 12
+13 15 14
+=>Unsolvable
+
+
+4
+1 2 3 4
+5 6   8
+9 10 7 11
+13 14 15 12
+=>3
+***RESULT OF HAMMING DISTANCE***
+Number of Expanded Nodes = 4
+Number of Explored Nodes = 10
+Time required = 1 ms
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 4
+Number of Explored Nodes = 10
+Time required = 1 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 4
+Number of Explored Nodes = 10
+Time required = 2 ms
+
+4
+3 2 12 7
+1 11 4 15
+5 10 8
+13 6 9 14
+=>31
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 4568
+Number of Explored Nodes = 9102
+Time required = 288 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 301
+Number of Explored Nodes = 635
+Time required = 24 ms
+
+
+4
+11 5 2 3
+1   10 4
+6 13 8 12
+14 9 15 7
+=>30
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 1181
+Number of Explored Nodes = 2423
+Time required = 52 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 1967
+Number of Explored Nodes = 3984
+Time required = 124 ms
+
+4
+1 7   9
+3 13 4 8
+5 11 2 15
+12 14 10 6
+=>46 in 6 mnts
+
+
+4
+1 2 3 4
+5 6 7
+8 9 10 11
+12 13 14 15
+=>30
+***RESULT OF MANHATTAN DISTANCE***
+Number of Expanded Nodes = 19305
+Number of Explored Nodes = 37710
+Time required = 2348 ms
+***RESULT OF LINEAR CONFLICTS***
+Number of Expanded Nodes = 5032
+Number of Explored Nodes = 10205
+Time required = 142 ms
+
+
+

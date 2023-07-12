@@ -323,6 +323,8 @@ public:
             this->pq.pop();
             this->expandedNodes++;
             if(top->getHVal() == 0) {
+                // cout << "Explored Nodes = " << this->exploredNodes << "\n";
+                // cout << "Expanded Nodes = " << this->expandedNodes << "\n";                
                 cout << "Minimum number of moves = " << top->getFVal() << "\n\n";
                 this->printMoves(top);
                 // this->freeUpMemory();
@@ -362,8 +364,8 @@ public:
 int main(int argc, char* argv[])
 {
 
-    freopen("in.txt", "r", stdin);
-    freopen("out.txt", "w", stdout);
+    // freopen("in.txt", "r", stdin);
+    // freopen("out.txt", "w", stdout);
 
     // cout << argv[0] << '\n';
 

@@ -1,22 +1,28 @@
 #pragma once
 
 // TODO remove when submitting
-#include <bits/stdc++.h>
+// #include <bits/stdc++.h>
 
 class GameState {
 
 private:
-    bool whichPlayer;
+    bool whichPlayer; // Two Players denoted by 0 and 1
     uint8_t state[14];
+    uint8_t selectedBinToReachThisState;
     GameState* parent;
 
 public:
-    GameState(bool whichPlayer, uint8_t state[], GameState* parent) {
+    GameState() = delete;
+
+    GameState(const GameState &) = delete;
+
+    GameState(bool whichPlayer, uint8_t state[], uint8_t selectedBinToReachThisState, GameState* parent) {
         this->whichPlayer = whichPlayer;
         for(int i = 0; i < 14; i++) {
             this->state[i] = state[i];
         }
         this->parent = parent;
+        this->selectedBinToReachThisState = selectedBinToReachThisState;
     }
 
     bool isFinalState() {
@@ -65,7 +71,7 @@ public:
             if(this->whichPlayer == whichPlayer) {
                 return 1;
             }
-            else {
+            else { // adverse effect
                 return -1;
             }
         }
@@ -87,7 +93,7 @@ public:
                     return stonesCaptured0;
                 }
             }
-            else {
+            else { // adverse effect
                 if(whichPlayer) {
                     return -stonesCaptured0;
                 }
@@ -99,6 +105,58 @@ public:
         else {
             return 0;
         }
+    }
+
+    GameState* getNextState(uint8_t bin) {        
+        uint8_t tempBin = bin;
+        uint8_t stones = this->state[bin];
+        uint8_t nextWhichPlayer = this->whichPlayer ^ 1;
+        uint8_t nextState[14] = {0};
+        for(int i = 0; i < 14; i++) {
+            nextState[i] = this->state[i];
+        }
+
+        nextState[bin] = 0;            
+
+        while(stones) {
+            bin = (bin + 1) % 14;
+            stones--;
+            if((this->whichPlayer && bin == 6) || (!this->whichPlayer && bin == 13)) {
+                bin = (bin + 1) % 14;
+            }
+            nextState[bin]++;
+        }
+
+        // get extra move
+        if(bin == 6 && !this->whichPlayer) {
+            nextWhichPlayer = 0;
+        }
+        else if(bin == 13 && this->whichPlayer) {
+            nextWhichPlayer = 1;
+        }
+
+        // get the empty pit advantage
+        if(!whichPlayer && 0 <= bin && bin < 6 && nextState[bin] == 1) {
+            nextState[6] += 1 + nextState[bin + ((6 - bin) << 1)];
+        }
+        else if(whichPlayer && 7 <= bin && bin < 14 && nextState[bin] == 1) {
+            nextState[13] += 1 + nextState[bin - ((bin - 6) << 1)];
+        }
+
+        return new GameState(nextWhichPlayer, nextState, tempBin, this);        
+    }
+
+    void finalStoneCollection() {
+        for(int i = 0; i < 6; i++) {
+            this->state[6] += this->state[i];            
+            this->state[i] = 0;
+            this->state[13] += this->state[i + 7];
+            this->state[i + 7] = 0;
+        }
+    }
+
+    bool getWinner() { // assuming the state is terminal
+        return this->state[13] > this->state[0];
     }
 
 };

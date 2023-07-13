@@ -1,7 +1,6 @@
 #pragma once
 
 // TODO remove when submitting
-// #include <bits/stdc++.h>
 
 class GameState {
 

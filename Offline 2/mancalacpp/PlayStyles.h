@@ -42,7 +42,7 @@ void Play_AI_vs_AI() {
     Player p1(1, p1maxDepth, p1heuristicID);
 
 
-    GameState *initialState = GameState::getInitialState(startingPlayer);;
+    GameState *initialState = GameState::getInitialState(startingPlayer);
     pair<int, int> pp;
 
  
@@ -57,16 +57,18 @@ void Play_AI_vs_AI() {
             }
             else {
                 W1 = weights[1][0]; W2 = weights[1][1]; W3 = weights[1][2]; W4 = weights[1][3];
-                pp = p1.minimaxAlphaBetaPruning(initialState, 1, INT_MIN, INT_MAX, true);
+                pp = p1.minimaxAlphaBetaPruning(initialState, 0, INT_MIN, INT_MAX, true);
                 cout << "\nPlayer 1 picks bin no : " << pp.second << "\n\n";
             }
-            initialState = initialState->changeState(pp.second);
+            GameState *tempInitialState = initialState;
+            initialState = initialState->changeState(pp.second);            
             initialState->printState();
+            delete tempInitialState;
         }
         else {
             initialState->finalStoneCollection();
             cout << "\n\n=========FINAL STATE=========\n\n";
-            initialState->printState();
+            initialState->printState();            
             cout <<"\n\n";
             if(initialState->getWinner() == 1) {
                 cout << "Player 1 has won\n\n";
@@ -77,11 +79,11 @@ void Play_AI_vs_AI() {
             else {             
                 cout << "Player 0 has won\n\n";
             }
+            delete initialState;
             break;
         }   
     }
 
-    delete initialState;
 }
 
 void Play_HUMAN_vs_AI() {
@@ -119,7 +121,7 @@ void Play_HUMAN_vs_AI() {
     Player p1(1, p1maxDepth, p1heuristicID);
 
 
-    GameState *initialState = GameState::getInitialState(startingPlayer);;
+	GameState *initialState = GameState::getInitialState(startingPlayer);
     pair<int, int> pp;
 
  
@@ -143,11 +145,13 @@ void Play_HUMAN_vs_AI() {
             }
             else {
                 W1 = weights[0][0]; W2 = weights[0][1]; W3 = weights[0][2]; W4 = weights[0][3];
-                pp = p1.minimaxAlphaBetaPruning(initialState, 1, INT_MIN, INT_MAX, true);
+                pp = p1.minimaxAlphaBetaPruning(initialState, 0, INT_MIN, INT_MAX, true);
                 cout << "\nPlayer 1 (AI) picks bin no : " << pp.second << "\n\n";
             }
-            initialState = initialState->changeState(pp.second);
+            GameState *tempInitialState = initialState;
+            initialState = initialState->changeState(pp.second);            
             initialState->printState();
+            delete tempInitialState;
         }
         else {
             initialState->finalStoneCollection();
@@ -163,11 +167,10 @@ void Play_HUMAN_vs_AI() {
             else {             
                 cout << "Human has won\n\n";
             }
+            delete initialState;
             break;
         }   
     }
-
-    delete initialState;
 }
 
 void Play_HUMAN_vs_HUMAN() {
@@ -183,7 +186,7 @@ void Play_HUMAN_vs_HUMAN() {
     Player p1(1, 0, 0);
 
 
-    GameState *initialState = GameState::getInitialState(startingPlayer);;
+	GameState *initialState = GameState::getInitialState(startingPlayer);
     pair<int, int> pp;
 
  
@@ -219,8 +222,10 @@ void Play_HUMAN_vs_HUMAN() {
                 }                
                 cout << "\nHuman1 picks bin no : " << pp.second << "\n\n";
             }
-            initialState = initialState->changeState(pp.second);
+            GameState *tempInitialState = initialState;
+            initialState = initialState->changeState(pp.second);            
             initialState->printState();
+            delete tempInitialState;
         }
         else {
             initialState->finalStoneCollection();
@@ -236,11 +241,10 @@ void Play_HUMAN_vs_HUMAN() {
             else {             
                 cout << "Human0 has won\n\n";
             }
+            delete initialState;
             break;
         }   
     }
-
-    delete initialState;
 }
 
 void generateReport() {
@@ -272,7 +276,7 @@ void generateReport() {
                     Player p1(1, depth, p1_heuristic);
 
 
-                    GameState *initialState = GameState::getInitialState(startingPlayer);;
+					GameState *initialState = GameState::getInitialState(startingPlayer);					
                     pair<int, int> pp;
 
                     while(true) {
@@ -283,9 +287,11 @@ void generateReport() {
                             }
                             else {
                                 W1 = weights[1][0]; W2 = weights[1][1]; W3 = weights[1][2]; W4 = weights[1][3];
-                                pp = p1.minimaxAlphaBetaPruning(initialState, 1, INT_MIN, INT_MAX, true);
+                                pp = p1.minimaxAlphaBetaPruning(initialState, 0, INT_MIN, INT_MAX, true);
                             }
-                            initialState = initialState->changeState(pp.second);                    
+							GameState *tempInitialState = initialState;
+							initialState = initialState->changeState(pp.second);            
+							delete tempInitialState;                  
                         }
                         else {
                             initialState->finalStoneCollection();                            
@@ -298,11 +304,10 @@ void generateReport() {
                             else {             
                                 p0_win++;
                             }
+                            delete initialState;
                             break;
                         }   
                     }
-
-                    delete initialState;
                 }
                 report << depth << ',' << p0_heuristic << ',' << p1_heuristic << ',' << p0_win << ',' << p1_win << ',' << draw << '\n';
             }

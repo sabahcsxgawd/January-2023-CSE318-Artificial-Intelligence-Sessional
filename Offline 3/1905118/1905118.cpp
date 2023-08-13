@@ -2,6 +2,7 @@
 using namespace std;
 
 #define ll long long
+#define pss pair<set<int>, set<int>>
 
 random_device rd;
 mt19937 gen(rd());
@@ -28,6 +29,7 @@ public:
         this->minWeightedEdge = LLONG_MAX;
         this->maxWeightedEdge = LLONG_MIN;
         this->weights.resize(this->nodeCount + 1);
+        this->edges.reserve(edgeCount);
     }
 
     void addEdge(int u, int v, ll w)
@@ -36,7 +38,7 @@ public:
         this->weights[v][u] = w;
         this->minWeightedEdge = min(this->minWeightedEdge, w);
         this->maxWeightedEdge = max(this->maxWeightedEdge, w);
-        this->edges.push_back(make_pair(u, v));
+        this->edges.emplace_back(make_pair(u, v));
     }
 
     int getNodeCount()
@@ -116,6 +118,56 @@ private:
     Graph *g;
     set<int> SEMI_GREEDY_S, SEMI_GREEDY_S_bar;
 
+    set<pss> N(pss &pS, pss &pG)
+    {
+        set<pss> pN, mN;
+        pN = N_plus(pS, pG);
+        mN = N_minus(pS, pG);
+        if (pN.size() < mN.size())
+        {
+            swap(pN, mN);
+        }
+        for (auto it = mN.begin(); it != mN.end(); it++)
+        {
+            pN.emplace(*it);
+        }
+        return pN;
+    }
+
+    set<pss> N_plus(pss &pS, pss &pG)
+    {
+        set<pss> N_plus;
+        for (auto it = pG.first.begin(); it != pG.first.end(); it++)
+        {
+            if ((pG.first.find(*it) != pG.first.end()) && !(pS.first.find(*it) != pS.first.end()))
+            {
+                pS.first.emplace(*it);
+                pS.second.erase(*it);
+                N_plus.insert(make_pair(pS.first, pS.second));
+                pS.first.erase(*it);
+                pS.second.emplace(*it);
+            }
+        }
+        return N_plus;
+    }
+
+    set<pss> N_minus(pss &pS, pss &pG)
+    {
+        set<pss> N_minus;
+        for (auto it = pS.first.begin(); it != pS.first.end(); it++)
+        {
+            if ((pS.first.find(*it) != pS.first.end()) && !(pG.first.find(*it) != pG.first.end()))
+            {
+                pS.first.erase(*it);
+                pS.second.emplace(*it);
+                N_minus.insert(make_pair(pS.first, pS.second));
+                pS.first.emplace(*it);
+                pS.second.erase(*it);
+            }
+        }
+        return N_minus;
+    }
+
 public:
     MaxCut() = delete;
 
@@ -144,13 +196,13 @@ public:
         pair<int, int> randomEdge = edgesRCL[randomPickDist(gen)];
         this->SEMI_GREEDY_S.clear();
         this->SEMI_GREEDY_S_bar.clear();
-        this->SEMI_GREEDY_S.insert(randomEdge.first);
-        this->SEMI_GREEDY_S_bar.insert(randomEdge.second);
+        this->SEMI_GREEDY_S.emplace(randomEdge.first);
+        this->SEMI_GREEDY_S_bar.emplace(randomEdge.second);
         int nodeCount = this->g->getNodeCount();
         set<int> nodeTracker;
         for (int i = 1; i <= nodeCount; i++)
         {
-            nodeTracker.insert(i);
+            nodeTracker.emplace(i);
         }
         nodeTracker.erase(randomEdge.first);
         nodeTracker.erase(randomEdge.second);
@@ -194,42 +246,131 @@ public:
             if (this->g->getSigmaX(randomNode, this->SEMI_GREEDY_S_bar) > this->g->getSigmaY(randomNode, this->SEMI_GREEDY_S))
             {
                 nodeTracker.erase(randomNode);
-                this->SEMI_GREEDY_S.insert(randomNode);
+                this->SEMI_GREEDY_S.emplace(randomNode);
             }
             else
             {
                 nodeTracker.erase(randomNode);
-                this->SEMI_GREEDY_S_bar.insert(randomNode);
+                this->SEMI_GREEDY_S_bar.emplace(randomNode);
             }
         }
 
         return this->g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
     }
 
-    ll LOCAL_SEARCH_MAXCUT() {
+    pss LOCAL_SEARCH_MAXCUT(set<int> &S, set<int> &S_bar, bool my_default = true)
+    {
+        if (my_default)
+        {
+            S = this->SEMI_GREEDY_S;
+            S_bar = this->SEMI_GREEDY_S_bar;
+        }
+
         bool change = true;
 
-        while(change) {
+        while (change)
+        {
             change = false;
-            for(int i = 1; (i <= g->getNodeCount()) && !change; i++) {
-                if(this->SEMI_GREEDY_S.find(i) != this->SEMI_GREEDY_S.end()) {
-                    if(this->g->getSigmaY(i, this->SEMI_GREEDY_S) > this->g->getSigmaX(i, this->SEMI_GREEDY_S_bar)) {
+            for (int i = 1; (i <= g->getNodeCount()) && !change; i++)
+            {
+                if (S.find(i) != S.end())
+                {
+                    if (this->g->getSigmaY(i, S) > this->g->getSigmaX(i, S_bar))
+                    {
                         change = true;
-                        this->SEMI_GREEDY_S_bar.insert(i);
-                        this->SEMI_GREEDY_S.erase(i);
+                        S_bar.emplace(i);
+                        S.erase(i);
                     }
                 }
-                else {
-                    if(this->g->getSigmaX(i, this->SEMI_GREEDY_S_bar) > this->g->getSigmaY(i, this->SEMI_GREEDY_S)) {
+                else
+                {
+                    if (this->g->getSigmaX(i, S_bar) > this->g->getSigmaY(i, S))
+                    {
                         change = true;
-                        this->SEMI_GREEDY_S.insert(i);
-                        this->SEMI_GREEDY_S_bar.erase(i);
+                        S.emplace(i);
+                        S_bar.erase(i);
                     }
                 }
             }
         }
 
-        return this->g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
+        return make_pair(S, S_bar);
+    }
+
+    pss PATH_RELINKING_MAXCUT(pss &pG)
+    {
+        set<int> S = this->SEMI_GREEDY_S;
+        set<int> S_bar = this->SEMI_GREEDY_S_bar;
+        set<int> S_plus, S_plus_bar, S_star, S_star_bar;
+        pss pS = make_pair(S, S_bar);
+        pss tempPSS1, tempPSS2;
+        set<pss> NS = this->N(pS, pG);
+        ll wStar = LLONG_MIN, w1 = LLONG_MIN;
+
+        while (NS.size() > 0)
+        {
+            ll tempW;
+            for (auto it = NS.begin(); it != NS.end(); it++)
+            {
+                tempW = g->getMaxCutWeight((*it).first, (*it).second);
+                if (tempW > w1)
+                {
+                    S_plus = (*it).first;
+                    S_plus_bar = (*it).second;
+                    w1 = tempW;
+                }
+            }
+            S = S_plus;
+            S_bar = S_plus_bar;
+            if (w1 > wStar)
+            {
+                S_star = S;
+                S_star_bar = S_bar;
+                wStar = w1;
+            }
+        }
+
+        tempPSS1 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar, false);
+
+        S = this->SEMI_GREEDY_S;
+        S_bar = this->SEMI_GREEDY_S_bar;
+        wStar = LLONG_MIN, w1 = LLONG_MIN;
+        swap(pG.first, pG.second);
+        NS = this->N(pS, pG);
+
+        while (NS.size() > 0)
+        {
+            ll tempW;
+            for (auto it = NS.begin(); it != NS.end(); it++)
+            {
+                tempW = g->getMaxCutWeight((*it).first, (*it).second);
+                if (tempW > w1)
+                {
+                    S_plus = (*it).first;
+                    S_plus_bar = (*it).second;
+                    w1 = tempW;
+                }
+            }
+            S = S_plus;
+            S_bar = S_plus_bar;
+            if (w1 > wStar)
+            {
+                S_star = S;
+                S_star_bar = S_bar;
+                wStar = w1;
+            }
+        }
+
+        tempPSS2 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar, false);
+
+        if (g->getMaxCutWeight(tempPSS1.first, tempPSS1.second) > g->getMaxCutWeight(tempPSS2.first, tempPSS2.second))
+        {
+            return tempPSS1;
+        }
+        else
+        {
+            return tempPSS2;
+        }
     }
 };
 
@@ -251,7 +392,6 @@ int main(int argc, char *argv[])
     MaxCut semi_greedy_solver(g);
 
     cout << semi_greedy_solver.SEMI_GREEDY_MAXCUT() << '\n';
-    cout << semi_greedy_solver.LOCAL_SEARCH_MAXCUT() << '\n';
 
     delete g;
 

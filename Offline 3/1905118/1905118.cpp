@@ -64,7 +64,7 @@ public:
         return this->minWeightedEdge;
     }
 
-    ll getSigmaX(int v, const vector<int> &Y)
+    ll getSigmaX(int v, const set<int> &Y)
     {
         ll sigmaX = 0;
 
@@ -76,7 +76,7 @@ public:
         return sigmaX;
     }
 
-    ll getSigmaY(int v, const vector<int> &X)
+    ll getSigmaY(int v, const set<int> &X)
     {
         ll sigmaY = 0;
 
@@ -88,7 +88,7 @@ public:
         return sigmaY;
     }
 
-    ll getMaxCutWeight(const vector<int> &X, const vector<int> &Y)
+    ll getMaxCutWeight(const set<int> &X, const set<int> &Y)
     {
         ll maxCutWeight = 0;
 
@@ -114,7 +114,7 @@ class MaxCut
 
 private:
     Graph *g;
-    vector<int> SEMI_GREEDY_S, SEMI_GREEDY_S_bar;
+    set<int> SEMI_GREEDY_S, SEMI_GREEDY_S_bar;
 
 public:
     MaxCut() = delete;
@@ -129,9 +129,9 @@ public:
     ll SEMI_GREEDY_MAXCUT()
     {
         double alpha = dist(gen);
-        ll wMin = g->getMinWeightedEdege(), wMax = g->getMaxWeightedEdege();
-        double miu = g->getMinWeightedEdege() + (alpha * (g->getMaxWeightedEdege() - g->getMinWeightedEdege()));
-        vector<pair<int, int>> edges = g->getEdges();
+        ll wMin = this->g->getMinWeightedEdege(), wMax = this->g->getMaxWeightedEdege();
+        double miu = this->g->getMinWeightedEdege() + (alpha * (this->g->getMaxWeightedEdege() - this->g->getMinWeightedEdege()));
+        vector<pair<int, int>> edges = this->g->getEdges();
         vector<pair<int, int>> edgesRCL;
         for (pair<int, int> p : edges)
         {
@@ -144,9 +144,9 @@ public:
         pair<int, int> randomEdge = edgesRCL[randomPickDist(gen)];
         this->SEMI_GREEDY_S.clear();
         this->SEMI_GREEDY_S_bar.clear();
-        this->SEMI_GREEDY_S.push_back(randomEdge.first);
-        this->SEMI_GREEDY_S_bar.push_back(randomEdge.second);
-        int nodeCount = g->getNodeCount();
+        this->SEMI_GREEDY_S.insert(randomEdge.first);
+        this->SEMI_GREEDY_S_bar.insert(randomEdge.second);
+        int nodeCount = this->g->getNodeCount();
         set<int> nodeTracker;
         for (int i = 1; i <= nodeCount; i++)
         {
@@ -165,10 +165,10 @@ public:
 
             for (auto it = nodeTracker.begin(); it != nodeTracker.end(); it++)
             {
-                minSigmaX = min(minSigmaX, g->getSigmaX(*it, this->SEMI_GREEDY_S_bar));
-                minSigmaY = min(minSigmaY, g->getSigmaY(*it, this->SEMI_GREEDY_S));
-                maxSigmaX = max(maxSigmaX, g->getSigmaX(*it, this->SEMI_GREEDY_S_bar));
-                maxSigmaY = max(maxSigmaY, g->getSigmaY(*it, this->SEMI_GREEDY_S));
+                minSigmaX = min(minSigmaX, this->g->getSigmaX(*it, this->SEMI_GREEDY_S_bar));
+                minSigmaY = min(minSigmaY, this->g->getSigmaY(*it, this->SEMI_GREEDY_S));
+                maxSigmaX = max(maxSigmaX, this->g->getSigmaX(*it, this->SEMI_GREEDY_S_bar));
+                maxSigmaY = max(maxSigmaY, this->g->getSigmaY(*it, this->SEMI_GREEDY_S));
             }
 
             wMin = min(minSigmaX, minSigmaY);
@@ -179,7 +179,7 @@ public:
 
             for (auto it = nodeTracker.begin(); it != nodeTracker.end(); it++)
             {
-                if (max(g->getSigmaX(*it, this->SEMI_GREEDY_S_bar), g->getSigmaY(*it, this->SEMI_GREEDY_S)) >= miu)
+                if (max(this->g->getSigmaX(*it, this->SEMI_GREEDY_S_bar), this->g->getSigmaY(*it, this->SEMI_GREEDY_S)) >= miu)
                 {
                     nodesRCL.push_back(*it);
                 }
@@ -191,19 +191,45 @@ public:
 
             int randomNode = nodesRCL[randomIntPickDist(gen)];
 
-            if (g->getSigmaX(randomNode, this->SEMI_GREEDY_S_bar) > g->getSigmaY(randomNode, this->SEMI_GREEDY_S))
+            if (this->g->getSigmaX(randomNode, this->SEMI_GREEDY_S_bar) > this->g->getSigmaY(randomNode, this->SEMI_GREEDY_S))
             {
                 nodeTracker.erase(randomNode);
-                this->SEMI_GREEDY_S.push_back(randomNode);
+                this->SEMI_GREEDY_S.insert(randomNode);
             }
             else
             {
                 nodeTracker.erase(randomNode);
-                this->SEMI_GREEDY_S_bar.push_back(randomNode);
+                this->SEMI_GREEDY_S_bar.insert(randomNode);
             }
         }
 
-        return g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
+        return this->g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
+    }
+
+    ll LOCAL_SEARCH_MAXCUT() {
+        bool change = true;
+
+        while(change) {
+            change = false;
+            for(int i = 1; (i <= g->getNodeCount()) && !change; i++) {
+                if(this->SEMI_GREEDY_S.find(i) != this->SEMI_GREEDY_S.end()) {
+                    if(this->g->getSigmaY(i, this->SEMI_GREEDY_S) > this->g->getSigmaX(i, this->SEMI_GREEDY_S_bar)) {
+                        change = true;
+                        this->SEMI_GREEDY_S_bar.insert(i);
+                        this->SEMI_GREEDY_S.erase(i);
+                    }
+                }
+                else {
+                    if(this->g->getSigmaX(i, this->SEMI_GREEDY_S_bar) > this->g->getSigmaY(i, this->SEMI_GREEDY_S)) {
+                        change = true;
+                        this->SEMI_GREEDY_S.insert(i);
+                        this->SEMI_GREEDY_S_bar.erase(i);
+                    }
+                }
+            }
+        }
+
+        return this->g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
     }
 };
 
@@ -225,6 +251,7 @@ int main(int argc, char *argv[])
     MaxCut semi_greedy_solver(g);
 
     cout << semi_greedy_solver.SEMI_GREEDY_MAXCUT() << '\n';
+    cout << semi_greedy_solver.LOCAL_SEARCH_MAXCUT() << '\n';
 
     delete g;
 

@@ -3,6 +3,7 @@ using namespace std;
 
 #define ll long long
 #define pss pair<set<int>, set<int>>
+#define ELITE_POOL_SIZE 3
 
 random_device rd;
 mt19937 gen(rd());
@@ -168,6 +169,39 @@ private:
         return N_minus;
     }
 
+    pss LOCAL_SEARCH_MAXCUT(set<int> &S, set<int> &S_bar)
+    {    
+        bool change = true;
+
+        while (change)
+        {
+            change = false;
+            for (int i = 1; (i <= g->getNodeCount()) && !change; i++)
+            {
+                if (S.find(i) != S.end())
+                {
+                    if (this->g->getSigmaY(i, S) > this->g->getSigmaX(i, S_bar))
+                    {
+                        change = true;
+                        S_bar.emplace(i);
+                        S.erase(i);
+                    }
+                }
+                else
+                {
+                    if (this->g->getSigmaX(i, S_bar) > this->g->getSigmaY(i, S))
+                    {
+                        change = true;
+                        S.emplace(i);
+                        S_bar.erase(i);
+                    }
+                }
+            }
+        }
+
+        return make_pair(S, S_bar);
+    }
+
 public:
     MaxCut() = delete;
 
@@ -258,51 +292,12 @@ public:
         return this->g->getMaxCutWeight(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
     }
 
-    pss LOCAL_SEARCH_MAXCUT(set<int> &S, set<int> &S_bar, bool my_default = true)
+    pss PATH_RELINKING_MAXCUT(pss &pS, pss &pG, ll *weightPass)
     {
-        if (my_default)
-        {
-            S = this->SEMI_GREEDY_S;
-            S_bar = this->SEMI_GREEDY_S_bar;
-        }
-
-        bool change = true;
-
-        while (change)
-        {
-            change = false;
-            for (int i = 1; (i <= g->getNodeCount()) && !change; i++)
-            {
-                if (S.find(i) != S.end())
-                {
-                    if (this->g->getSigmaY(i, S) > this->g->getSigmaX(i, S_bar))
-                    {
-                        change = true;
-                        S_bar.emplace(i);
-                        S.erase(i);
-                    }
-                }
-                else
-                {
-                    if (this->g->getSigmaX(i, S_bar) > this->g->getSigmaY(i, S))
-                    {
-                        change = true;
-                        S.emplace(i);
-                        S_bar.erase(i);
-                    }
-                }
-            }
-        }
-
-        return make_pair(S, S_bar);
-    }
-
-    pss PATH_RELINKING_MAXCUT(pss &pG)
-    {
-        set<int> S = this->SEMI_GREEDY_S;
-        set<int> S_bar = this->SEMI_GREEDY_S_bar;
+        set<int> S = pS.first;
+        set<int> S_bar = pS.second;
         set<int> S_plus, S_plus_bar, S_star, S_star_bar;
-        pss pS = make_pair(S, S_bar);
+        // pss pS = make_pair(S, S_bar);
         pss tempPSS1, tempPSS2;
         set<pss> NS = this->N(pS, pG);
         ll wStar = LLONG_MIN, w1 = LLONG_MIN;
@@ -330,10 +325,10 @@ public:
             }
         }
 
-        tempPSS1 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar, false);
+        tempPSS1 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar);
 
-        S = this->SEMI_GREEDY_S;
-        S_bar = this->SEMI_GREEDY_S_bar;
+        S = pS.first;
+        S_bar = pS.second;
         wStar = LLONG_MIN, w1 = LLONG_MIN;
         swap(pG.first, pG.second);
         NS = this->N(pS, pG);
@@ -361,16 +356,75 @@ public:
             }
         }
 
-        tempPSS2 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar, false);
+        tempPSS2 = this->LOCAL_SEARCH_MAXCUT(S_star, S_star_bar);
 
-        if (g->getMaxCutWeight(tempPSS1.first, tempPSS1.second) > g->getMaxCutWeight(tempPSS2.first, tempPSS2.second))
-        {
+        ll weight1 = g->getMaxCutWeight(tempPSS1.first, tempPSS1.second);
+        ll weight2 = g->getMaxCutWeight(tempPSS2.first, tempPSS2.second);
+
+        if(weight1 > weight2) {
+            *weightPass = weight1;
             return tempPSS1;
         }
-        else
-        {
+        else {
+            *weightPass = weight2;
             return tempPSS2;
         }
+    }
+
+    ll GRASP_PR_MAXCUT() {
+        ll w_Star = LLONG_MIN;
+        ll *tempW;
+        pss S_star, tempLocal;
+        pair<pss, ll> elitePool[ELITE_POOL_SIZE];
+        ll bestW_pool = LLONG_MIN, worstW_pool = LLONG_MAX;
+        int bestIndex_pool = -1, worstIndex_pool = -1, count = 0;
+        for(int i = 0; i < 6; i++) {
+            this->SEMI_GREEDY_MAXCUT();
+            tempLocal = this->LOCAL_SEARCH_MAXCUT(this->SEMI_GREEDY_S, this->SEMI_GREEDY_S_bar);
+            
+            if(count > 0) {
+                uniform_int_distribution<>randomPoolPick(0, count - 1);
+                pss pG = elitePool[randomPoolPick(gen)].first;
+                tempLocal = this->PATH_RELINKING_MAXCUT(tempLocal, pG, tempW);
+            }
+
+            if(count < ELITE_POOL_SIZE) {
+                elitePool[count++] = make_pair(tempLocal, *tempW);
+                if(*tempW > bestW_pool) {
+                    bestW_pool = *tempW;
+                    bestIndex_pool = count - 1;
+                }
+                if(*tempW < worstW_pool) {
+                    worstIndex_pool = *tempW;
+                    worstIndex_pool = count - 1;
+                }
+            }
+
+            if(count == ELITE_POOL_SIZE) {
+                if(*tempW > worstW_pool) {
+                    elitePool[worstIndex_pool] = make_pair(tempLocal, *tempW);
+                    bestW_pool = worstW_pool = elitePool[0].second;
+                    bestIndex_pool = worstIndex_pool = 0;
+                    for(int j = 1; j < ELITE_POOL_SIZE; j++) {
+                        if(elitePool[j].second > bestW_pool) {
+                            bestIndex_pool = j;
+                            bestW_pool = elitePool[j].second;
+                        }
+                        if(elitePool[j].second < worstW_pool) {
+                            worstIndex_pool = j;
+                            worstW_pool = elitePool[j].second;
+                        }
+                    }
+                }
+            }
+
+            if(bestW_pool > w_Star) {
+                w_Star = bestW_pool;
+                S_star = elitePool[bestIndex_pool].first;
+            }
+        }
+
+        return w_Star;
     }
 };
 
@@ -389,9 +443,13 @@ int main(int argc, char *argv[])
         g->addEdge(u, v, w);
     }
 
-    MaxCut semi_greedy_solver(g);
+    // MaxCut semi_greedy_solver(g);
 
-    cout << semi_greedy_solver.SEMI_GREEDY_MAXCUT() << '\n';
+    // cout << semi_greedy_solver.SEMI_GREEDY_MAXCUT() << '\n';
+
+    MaxCut boss(g);
+
+    cout << boss.GRASP_PR_MAXCUT() << '\n';
 
     delete g;
 

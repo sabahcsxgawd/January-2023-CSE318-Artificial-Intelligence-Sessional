@@ -159,7 +159,7 @@ private:
             }
         }
 
-        return make_pair(w, temp);
+        return make_pair(w, best);
     }
 
     pss LOCAL_SEARCH_MAXCUT(pss& pS)
@@ -297,9 +297,6 @@ public:
 
         while (tempN.first != LLONG_MIN)
         {
-            
-            if(tempStar == tempN.second) break;
-
             if(tempN.first > wStar) {
                 wStar = tempN.first;
                 tempStar = tempN.second;
@@ -316,8 +313,6 @@ public:
         tempN = this->N(pS, pG);
         while (tempN.first != LLONG_MIN)
         {
-            if(tempStar == tempN.second) break;
-
             if(tempN.first > wStar) {
                 wStar = tempN.first;
                 tempStar = tempN.second;
@@ -416,6 +411,13 @@ public:
         
         pss pG = this->LOCAL_SEARCH_MAXCUT(pS);
         cout << g->getMaxCutWeight(pG.first, pG.second) << '\n';
+
+        this->SEMI_GREEDY_MAXCUT();
+        pS = make_pair(this->member_S, this->member_S_bar);
+        cout << g->getMaxCutWeight(pS.first, pS.second) << '\n';
+
+        pS = this->LOCAL_SEARCH_MAXCUT(pS);
+        cout << g->getMaxCutWeight(pS.first, pS.second) << '\n';
 
         pwpss gg = this->PATH_RELINKING_MAXCUT(pS, pG);
         cout << g->getMaxCutWeight(gg.second.first, gg.second.second) << '\n';

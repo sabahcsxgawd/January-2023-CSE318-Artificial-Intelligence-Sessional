@@ -6,5 +6,5 @@ g++ -std=c++17 -fsanitize=address 1905118.cpp -o 1905118
 # do
     # ./1905118 < ../set1/g$i.rud > ./output/out$i.txt
 # done
-./1905118 < ../set1/g1.rud
+./1905118 < ../set1/g12.rud
 # ./1905118 < in.txt

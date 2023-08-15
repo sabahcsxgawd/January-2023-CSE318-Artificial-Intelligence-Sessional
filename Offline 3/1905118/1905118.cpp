@@ -4,7 +4,7 @@ using namespace std;
 #define ll long long
 #define pss pair<set<int>, set<int>>
 #define pwpss pair<ll, pss>
-#define ELITE_POOL_SIZE 3
+#define ELITE_POOL_SIZE 4
 
 random_device rd;
 mt19937 gen(rd());
@@ -162,7 +162,7 @@ private:
         return make_pair(w, best);
     }
 
-    pss LOCAL_SEARCH_MAXCUT(pss& pS)
+    pss LOCAL_SEARCH_MAXCUT(pss &pS)
     {
         bool change = true;
         int nodeCount = g->getNodeCount();
@@ -289,37 +289,44 @@ public:
 
     pwpss PATH_RELINKING_MAXCUT(pss &pS, pss &pG)
     {
-        pss tempPSS1, tempPSS2, tempStar;        
+        pss tempPSS1, tempPSS2, tempStar;
         ll wStar = LLONG_MIN;
 
         pwpss tempN = this->N(pS, pG);
-        pss prevN1, prevN2;    
+        pss prevN1, prevN2;
 
-        while (tempN.first != LLONG_MIN)
+        int limit = 50;
+
+        while (tempN.first != LLONG_MIN && limit--)
         {
-            if(tempN.first > wStar) {
+            if (tempN.first > wStar)
+            {
                 wStar = tempN.first;
                 tempStar = tempN.second;
             }
             prevN1 = tempN.second;
             tempN = this->N(tempN.second, pG);
-            if(prevN1 == tempN.second) break;
+            if (prevN1 == tempN.second)
+                break;
         }
 
         tempPSS1 = this->LOCAL_SEARCH_MAXCUT(tempStar);
 
         wStar = LLONG_MIN;
+        limit = 50;
         swap(pG.first, pG.second);
         tempN = this->N(pS, pG);
-        while (tempN.first != LLONG_MIN)
+        while (tempN.first != LLONG_MIN && limit--)
         {
-            if(tempN.first > wStar) {
+            if (tempN.first > wStar)
+            {
                 wStar = tempN.first;
                 tempStar = tempN.second;
-            }            
+            }
             prevN2 = tempN.second;
             tempN = this->N(tempN.second, pG);
-            if(prevN2 == tempN.second) break;
+            if (prevN2 == tempN.second)
+                break;
         }
 
         tempPSS2 = this->LOCAL_SEARCH_MAXCUT(tempStar);
@@ -327,88 +334,72 @@ public:
         ll w1 = g->getMaxCutWeight(tempPSS1.first, tempPSS1.second);
         ll w2 = g->getMaxCutWeight(tempPSS2.first, tempPSS2.second);
 
-        if(w1 > w2) {
+        if (w1 > w2)
+        {
             return make_pair(w1, tempPSS1);
         }
-        else {
+        else
+        {
             return make_pair(w2, tempPSS2);
         }
     }
 
-    // ll GRASP_PR_MAXCUT()
-    // {
-    //     ll w_Star = LLONG_MIN;
-    //     ll *tempW;
-    //     pss S_star, tempLocal;
-    //     pair<pss, ll> elitePool[ELITE_POOL_SIZE];
-    //     ll bestW_pool = LLONG_MIN, worstW_pool = LLONG_MAX;
-    //     int bestIndex_pool = -1, worstIndex_pool = -1, count = 0;
-    //     for (int i = 0; i < 6; i++)
-    //     {
-    //         this->member_MAXCUT();
-    //         tempLocal = this->LOCAL_SEARCH_MAXCUT(this->member_S, this->member_S_bar);
+    ll GRASP_PR_MAXCUT()
+    {
+        int cnt = 0;
+        ll wStar = LLONG_MIN, tempW;
+        multiset<pwpss> ELITE_POOL;
+        pwpss randomElite;
+        pss pG, tempLocal, tempStar;
 
-    //         if (count > 0)
-    //         {
-    //             uniform_int_distribution<> randomPoolPick(0, count - 1);
-    //             pss pG = elitePool[randomPoolPick(gen)].first;
-    //             tempLocal = this->PATH_RELINKING_MAXCUT(tempLocal, pG, tempW);
-    //         }
+        for (int i = 0; i < 6; i++)
+        {            
+            this->SEMI_GREEDY_MAXCUT();
+            tempLocal = make_pair(this->member_S, this->member_S_bar);
+            tempLocal = this->LOCAL_SEARCH_MAXCUT(tempLocal);
+            tempW = g->getMaxCutWeight(tempLocal.first, tempLocal.second);
 
-    //         if (count < ELITE_POOL_SIZE)
-    //         {
-    //             elitePool[count++] = make_pair(tempLocal, *tempW);
-    //             if (*tempW > bestW_pool)
-    //             {
-    //                 bestW_pool = *tempW;
-    //                 bestIndex_pool = count - 1;
-    //             }
-    //             if (*tempW < worstW_pool)
-    //             {
-    //                 worstIndex_pool = *tempW;
-    //                 worstIndex_pool = count - 1;
-    //             }
-    //         }
+            if(cnt == 0) {
+                cnt++;
+                ELITE_POOL.emplace(make_pair(tempW, tempLocal));
+            }
 
-    //         if (count == ELITE_POOL_SIZE)
-    //         {
-    //             if (*tempW > worstW_pool)
-    //             {
-    //                 elitePool[worstIndex_pool] = make_pair(tempLocal, *tempW);
-    //                 bestW_pool = worstW_pool = elitePool[0].second;
-    //                 bestIndex_pool = worstIndex_pool = 0;
-    //                 for (int j = 1; j < ELITE_POOL_SIZE; j++)
-    //                 {
-    //                     if (elitePool[j].second > bestW_pool)
-    //                     {
-    //                         bestIndex_pool = j;
-    //                         bestW_pool = elitePool[j].second;
-    //                     }
-    //                     if (elitePool[j].second < worstW_pool)
-    //                     {
-    //                         worstIndex_pool = j;
-    //                         worstW_pool = elitePool[j].second;
-    //                     }
-    //                 }
-    //             }
-    //         }
+            else {
+                uniform_int_distribution<>randomElitePick(0, cnt - 1);
+                auto it = ELITE_POOL.begin();
+                advance(it, randomElitePick(gen));
+                pG = (*it).second;        
+                randomElite = this->PATH_RELINKING_MAXCUT(tempLocal, pG);
+                tempLocal = randomElite.second;
+                tempW = randomElite.first;
+                ELITE_POOL.emplace(randomElite);
+                    
+                if(cnt < ELITE_POOL_SIZE) {
+                    cnt++;
+                }
+                else {
+                    ELITE_POOL.erase(ELITE_POOL.begin());
+                }
+            }
 
-    //         if (bestW_pool > w_Star)
-    //         {
-    //             w_Star = bestW_pool;
-    //             S_star = elitePool[bestIndex_pool].first;
-    //         }
-    //     }
+            if(tempW > wStar) {
+                wStar = tempW;
+                tempStar = tempLocal;
+            }
+        }
 
-    //     return w_Star;
-    // }
+        this->member_S = tempStar.first;
+        this->member_S_bar = tempStar.second;
+
+        return wStar;
+    }
 
     void dummyTest()
     {
         this->SEMI_GREEDY_MAXCUT();
         pss pS = make_pair(this->member_S, this->member_S_bar);
         cout << g->getMaxCutWeight(pS.first, pS.second) << '\n';
-        
+
         pss pG = this->LOCAL_SEARCH_MAXCUT(pS);
         cout << g->getMaxCutWeight(pG.first, pG.second) << '\n';
 
@@ -421,7 +412,6 @@ public:
 
         pwpss gg = this->PATH_RELINKING_MAXCUT(pS, pG);
         cout << g->getMaxCutWeight(gg.second.first, gg.second.second) << '\n';
-        
     }
 };
 
@@ -432,19 +422,17 @@ int main(int argc, char *argv[])
     ll w;
     cin >> n >> m;
 
-    Graph *g = new Graph(n, m);
+    Graph g(n, m);
 
     for (int i = 0; i < m; i++)
     {
         cin >> u >> v >> w;
-        g->addEdge(u, v, w);
+        g.addEdge(u, v, w);
     }
 
-    MaxCut boss(g);
+    MaxCut boss(&g);
 
-    boss.dummyTest();
-
-    delete g;
+    cout << boss.GRASP_PR_MAXCUT() << '\n';
 
     return 0;
 }

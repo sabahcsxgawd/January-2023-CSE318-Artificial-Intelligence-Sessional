@@ -6,6 +6,11 @@ using namespace std;
 #define pwpss pair<ll, pss>
 
 int main() {
+
+    vector<int> v(3);
+    v.erase(v.begin(), v.end());
+    cout << v.size() << '\n';
+
     // set<int> s1 = {1, 2, 3};
     // set<int> s2 = {4, 5, 6};
     // set<int> s3 = {1, 2, 3};
@@ -22,17 +27,17 @@ int main() {
     // s.emplace(make_pair(10, g2));
     // s.emplace(make_pair(30, g3));
 
-    multiset<int> s;
-    s.emplace(1);
-    s.emplace(2);
-    s.emplace(3);
-    s.emplace(1);
+    // multiset<int> s;
+    // s.emplace(1);
+    // s.emplace(2);
+    // s.emplace(3);
+    // s.emplace(1);
 
-    s.erase(s.begin());
+    // s.erase(s.begin());
 
-    for(int x : s) {
-        cout << x << ' ';
-    }
+    // for(int x : s) {
+    //     cout << x << ' ';
+    // }
 
     return 0;
 }

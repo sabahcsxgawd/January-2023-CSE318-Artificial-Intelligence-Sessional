@@ -4,7 +4,8 @@ using namespace std;
 #define ll long long
 #define pss pair<set<int>, set<int>>
 #define pwpss pair<ll, pss>
-#define ELITE_POOL_SIZE 4
+#define ELITE_POOL_SIZE 10
+#define GRASP_ITERATIONS 20
 
 random_device rd;
 mt19937 gen(rd());
@@ -16,7 +17,7 @@ class Graph
 private:
     int nodeCount, edgeCount;
     ll minWeightedEdge, maxWeightedEdge;
-    vector<map<int, int>> weights;
+    vector<map<int, ll>> weights;
     vector<pair<int, int>> edges;
 
 public:
@@ -32,12 +33,19 @@ public:
         this->maxWeightedEdge = LLONG_MIN;
         this->weights.resize(this->nodeCount + 1);
         this->edges.reserve(edgeCount);
+
+        for (int i = 1; i <= nodeCount; i++)
+        {
+            for (int j = 1; j <= nodeCount; j++)
+            {
+                this->weights[i][j] = LLONG_MIN;
+            }
+        }
     }
 
     void addEdge(int u, int v, ll w)
-    {
-        this->weights[u][v] = w;
-        this->weights[v][u] = w;
+    {        
+        this->weights[v][u] = this->weights[u][v] = max(w, this->weights[u][v]);
         this->minWeightedEdge = min(this->minWeightedEdge, w);
         this->maxWeightedEdge = max(this->maxWeightedEdge, w);
         this->edges.emplace_back(make_pair(u, v));
@@ -55,6 +63,10 @@ public:
 
     ll getWeight(int u, int v)
     {
+        if (this->weights[u][v] == LLONG_MIN)
+        {
+            return 0;
+        }
         return this->weights[u][v];
     }
 
@@ -74,7 +86,7 @@ public:
 
         for (int u : Y)
         {
-            sigmaX += this->weights[v][u];
+            sigmaX += this->getWeight(v, u);
         }
 
         return sigmaX;
@@ -86,7 +98,7 @@ public:
 
         for (int u : X)
         {
-            sigmaY += this->weights[v][u];
+            sigmaY += this->getWeight(v, u);
         }
 
         return sigmaY;
@@ -100,14 +112,14 @@ public:
         {
             for (int j : Y)
             {
-                maxCutWeight += this->weights[i][j];
+                maxCutWeight += this->getWeight(i, j);
             }
         }
 
         return maxCutWeight;
     }
 
-    vector<pair<int, int>> &getEdges()
+    vector<pair<int, int>> getEdges()
     {
         return this->edges;
     }
@@ -119,6 +131,7 @@ class MaxCut
 private:
     Graph *g;
     set<int> member_S, member_S_bar;
+    vector<tuple<int, ll, ll>> sigmas;
 
     pwpss N(pss &pS, pss &pG)
     {
@@ -197,6 +210,69 @@ private:
         return temp;
     }
 
+    pwpss new_LOCAL_SEARCH_MAXCUT(pss &pS)
+    {
+        int nodeCount = this->g->getNodeCount();
+        pss temp = pS;
+        ll tempW = 0;
+        bool change = true;
+        
+        while (change)
+        {
+            change = false;
+
+            for (int i = 1; i <= nodeCount; i++)
+            {
+                if (get<0>(this->sigmas[i]) == 1)
+                {
+                    if (get<2>(this->sigmas[i]) > get<1>(this->sigmas[i]))
+                    {
+                        temp.second.emplace(i);
+                        temp.first.erase(i);
+                        get<0>(this->sigmas[i]) = 2;
+                        change = true;
+
+                        for (int j = 1; j <= nodeCount; j++)
+                        {
+                            get<2>(this->sigmas[j]) -= this->g->getWeight(j, i);
+                            get<1>(this->sigmas[j]) += this->g->getWeight(j, i);
+                        }
+
+                        break;
+                    }
+                }
+                else if (get<0>(this->sigmas[i]) == 2)
+                {
+                    if (get<1>(this->sigmas[i]) > get<2>(this->sigmas[i]))
+                    {
+                        temp.first.emplace(i);
+                        temp.second.erase(i);
+                        get<0>(this->sigmas[i]) = 1;
+                        change = true;
+
+                        for (int j = 1; j <= nodeCount; j++)
+                        {
+                            get<1>(this->sigmas[j]) -= this->g->getWeight(j, i);
+                            get<2>(this->sigmas[j]) += this->g->getWeight(j, i);
+                        }
+
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (int i = 1; i <= nodeCount; i++)
+        {
+            if (get<0>(this->sigmas[i]) == 1)
+            {
+                tempW += get<1>(this->sigmas[i]);
+            }
+        } 
+        assert(tempW == g->getMaxCutWeight(temp.first, temp.second));
+        return make_pair(tempW, temp);
+    }
+
 public:
     MaxCut() = delete;
 
@@ -205,14 +281,15 @@ public:
     MaxCut(Graph *g)
     {
         this->g = g;
+        this->sigmas.resize(g->getNodeCount() + 1, make_tuple(0, 0, 0));
     }
 
     ll SEMI_GREEDY_MAXCUT()
     {
         double alpha = dist(gen);
         ll wMin = this->g->getMinWeightedEdege(), wMax = this->g->getMaxWeightedEdege();
-        double miu = this->g->getMinWeightedEdege() + (alpha * (this->g->getMaxWeightedEdege() - this->g->getMinWeightedEdege()));
-        vector<pair<int, int>> edges = this->g->getEdges();
+        double miu = wMin + (alpha * (wMax - wMin));
+        vector<pair<int, int>> edges = this->g->getEdges(); // TODO custom sort
         vector<pair<int, int>> edgesRCL;
         for (pair<int, int> p : edges)
         {
@@ -266,8 +343,6 @@ public:
                 }
             }
 
-            assert(nodesRCL.size() > 0);
-
             uniform_int_distribution<> randomIntPickDist(0, nodesRCL.size() - 1);
 
             int randomNode = nodesRCL[randomIntPickDist(gen)];
@@ -287,6 +362,113 @@ public:
         return this->g->getMaxCutWeight(this->member_S, this->member_S_bar);
     }
 
+    void new_SEMI_GREEDY_MAXCUT()
+    {
+        int nodeCount = this->g->getNodeCount();
+        this->member_S.clear();
+        this->member_S_bar.clear();
+        for (int i = 1; i <= nodeCount; i++)
+        {
+            get<0>(this->sigmas[i]) = 0;
+            get<1>(this->sigmas[i]) = 0;
+            get<2>(this->sigmas[i]) = 0;
+        }
+
+        ll wMin = this->g->getMinWeightedEdege(), wMax = this->g->getMaxWeightedEdege();
+        double alpha = dist(gen);
+        double miu = wMin + (alpha * (wMax - wMin));
+        vector<pair<int, int>> edges = this->g->getEdges();
+        vector<pair<int, int>> edgesRCL;
+        for (pair<int, int> p : edges)
+        {
+            if (g->getWeight(p.first, p.second) >= miu)
+            {
+                edgesRCL.emplace_back(p);
+            }
+        }
+
+        uniform_int_distribution<> randomPickDist(0, edgesRCL.size() - 1);
+        pair<int, int> randomEdge = edgesRCL[randomPickDist(gen)];
+
+        this->member_S.emplace(randomEdge.first);
+        get<0>(this->sigmas[randomEdge.first]) = 1;
+        this->member_S_bar.emplace(randomEdge.second);
+        get<0>(this->sigmas[randomEdge.second]) = 2;
+
+        int remainingNodesCount = nodeCount - 2;
+        wMin = LLONG_MAX;
+        wMax = LLONG_MIN;
+
+        for (int i = 1; i <= nodeCount; i++)
+        {
+            get<1>(this->sigmas[i]) = this->g->getSigmaX(i, this->member_S_bar);
+            get<2>(this->sigmas[i]) = this->g->getSigmaY(i, this->member_S);
+            if (get<0>(this->sigmas[i]) == 0)
+            {
+                wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+                wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+            }
+        }
+
+        vector<int> nodesRCL;
+
+        while (remainingNodesCount--)
+        {
+            miu = wMin + (alpha * (wMax - wMin));
+            nodesRCL.clear();
+            wMin = LLONG_MAX;
+            wMax = LLONG_MIN;
+
+            for (int i = 1; i <= nodeCount; i++)
+            {
+                if ((get<0>(this->sigmas[i]) == 0) && (max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])) >= miu))
+                {
+                    nodesRCL.emplace_back(i);
+                }
+            }
+
+            assert(nodesRCL.size() != 0);
+            uniform_int_distribution<> randomIntPickDist(0, nodesRCL.size() - 1);
+
+            int randomNode = nodesRCL[randomIntPickDist(gen)];
+
+            if (get<1>(this->sigmas[randomNode]) > get<2>(this->sigmas[randomNode]))
+            {
+                this->member_S.emplace(randomNode);
+                get<0>(this->sigmas[randomNode]) = 1;
+                for (int i = 1; i <= nodeCount; i++)
+                {
+                    get<2>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                }
+            }
+            else
+            {
+                this->member_S_bar.emplace(randomNode);
+                get<0>(this->sigmas[randomNode]) = 2;
+                for (int i = 1; i <= nodeCount; i++)
+                {
+                    get<1>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                }
+            }
+
+            if (remainingNodesCount == 0)
+            {
+                break;
+            }
+
+            for (int i = 1; i <= nodeCount; i++)
+            {
+                if (get<0>(this->sigmas[i]) == 0)
+                {
+                    wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+                    wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+                }
+            }
+        }
+
+        // return this->g->getMaxCutWeight(this->member_S, this->member_S_bar);
+    }
+
     pwpss PATH_RELINKING_MAXCUT(pss &pS, pss &pG)
     {
         pss tempPSS1, tempPSS2, tempStar;
@@ -295,7 +477,7 @@ public:
         pwpss tempN = this->N(pS, pG);
         pss prevN1, prevN2;
 
-        int limit = 50;
+        int limit = 100;
 
         while (tempN.first != LLONG_MIN && limit--)
         {
@@ -313,7 +495,7 @@ public:
         tempPSS1 = this->LOCAL_SEARCH_MAXCUT(tempStar);
 
         wStar = LLONG_MIN;
-        limit = 50;
+        limit = 100;
         swap(pG.first, pG.second);
         tempN = this->N(pS, pG);
         while (tempN.first != LLONG_MIN && limit--)
@@ -348,41 +530,47 @@ public:
     {
         int cnt = 0;
         ll wStar = LLONG_MIN, tempW;
-        multiset<pwpss> ELITE_POOL;
+        set<pwpss> ELITE_POOL;
         pwpss randomElite;
         pss pG, tempLocal, tempStar;
 
-        for (int i = 0; i < 6; i++)
-        {            
+        for (int i = 0; i < GRASP_ITERATIONS; i++)
+        {
             this->SEMI_GREEDY_MAXCUT();
             tempLocal = make_pair(this->member_S, this->member_S_bar);
             tempLocal = this->LOCAL_SEARCH_MAXCUT(tempLocal);
             tempW = g->getMaxCutWeight(tempLocal.first, tempLocal.second);
 
-            if(cnt == 0) {
+            if (cnt == 0)
+            {
                 cnt++;
                 ELITE_POOL.emplace(make_pair(tempW, tempLocal));
             }
 
-            else {
-                uniform_int_distribution<>randomElitePick(0, cnt - 1);
+            else
+            {
+                uniform_int_distribution<> randomElitePick(0, cnt - 1);
                 auto it = ELITE_POOL.begin();
                 advance(it, randomElitePick(gen));
-                pG = (*it).second;        
+                pG = (*it).second;
                 randomElite = this->PATH_RELINKING_MAXCUT(tempLocal, pG);
                 tempLocal = randomElite.second;
                 tempW = randomElite.first;
                 ELITE_POOL.emplace(randomElite);
-                    
-                if(cnt < ELITE_POOL_SIZE) {
-                    cnt++;
+
+                if (cnt < ELITE_POOL_SIZE)
+                {
+                    cnt = ELITE_POOL.size();
                 }
-                else {
+                else
+                {
+
                     ELITE_POOL.erase(ELITE_POOL.begin());
                 }
             }
 
-            if(tempW > wStar) {
+            if (tempW > wStar)
+            {
                 wStar = tempW;
                 tempStar = tempLocal;
             }
@@ -391,6 +579,29 @@ public:
         this->member_S = tempStar.first;
         this->member_S_bar = tempStar.second;
 
+        return wStar;
+    }
+
+    ll GRASP_MAXCUT()
+    {
+        ll wStar = LLONG_MIN, tempW;
+        pss tempStar;
+        pwpss tempLocal;
+
+        for (int i = 0; i < 6; i++)
+        {
+            this->new_SEMI_GREEDY_MAXCUT();
+            tempLocal.second = make_pair(this->member_S, this->member_S_bar);
+            tempLocal = this->new_LOCAL_SEARCH_MAXCUT(tempLocal.second);
+            tempW = tempLocal.first;
+            // assert(tempW == this->g->getMaxCutWeight(tempLocal.second.first, tempLocal.second.second));
+
+            if (tempW > wStar)
+            {
+                wStar = tempW;
+                tempStar = tempLocal.second;
+            }
+        }
         return wStar;
     }
 
@@ -432,7 +643,8 @@ int main(int argc, char *argv[])
 
     MaxCut boss(&g);
 
-    cout << boss.GRASP_PR_MAXCUT() << '\n';
+    // cout << boss.GRASP_PR_MAXCUT() << '\n';
+    cout << boss.GRASP_MAXCUT() << '\n';
 
     return 0;
 }

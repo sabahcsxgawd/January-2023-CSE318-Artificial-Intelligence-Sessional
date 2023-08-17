@@ -5,6 +5,7 @@ g++ -std=c++17 -fsanitize=address 1905118.cpp -o 1905118
 # for i in $(seq 1 1 54)
 # do
     # ./1905118 < ../set1/g$i.rud > ./output/out$i.txt
+#     echo $i $(head -n 1 ../set1/g$i.rud)
 # done
-./1905118 < ../set1/g12.rud
+time ./1905118 < ../set1/g22.rud
 # ./1905118 < in.txt

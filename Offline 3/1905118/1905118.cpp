@@ -216,9 +216,11 @@ private:
         pss temp = pS;
         ll tempW = 0;
         bool change = true;
+        int localIterationCnt = 0;
         
         while (change)
         {
+            localIterationCnt++;
             change = false;
 
             for (int i = 1; i <= nodeCount; i++)
@@ -269,7 +271,7 @@ private:
                 tempW += get<1>(this->sigmas[i]);
             }
         } 
-        assert(tempW == g->getMaxCutWeight(temp.first, temp.second));
+        // cout << localIterationCnt << ' ';
         return make_pair(tempW, temp);
     }
 
@@ -362,7 +364,7 @@ public:
         return this->g->getMaxCutWeight(this->member_S, this->member_S_bar);
     }
 
-    void new_SEMI_GREEDY_MAXCUT()
+    void new_SEMI_GREEDY_MAXCUT(double alpha)
     {
         int nodeCount = this->g->getNodeCount();
         this->member_S.clear();
@@ -375,7 +377,7 @@ public:
         }
 
         ll wMin = this->g->getMinWeightedEdege(), wMax = this->g->getMaxWeightedEdege();
-        double alpha = dist(gen);
+        // double alpha = dist(gen);
         double miu = wMin + (alpha * (wMax - wMin));
         vector<pair<int, int>> edges = this->g->getEdges();
         vector<pair<int, int>> edgesRCL;
@@ -582,15 +584,17 @@ public:
         return wStar;
     }
 
-    ll GRASP_MAXCUT()
+    ll GRASP_MAXCUT(double alpha)
     {
         ll wStar = LLONG_MIN, tempW;
         pss tempStar;
         pwpss tempLocal;
 
+        // double alpha = dist(gen);
+
         for (int i = 0; i < 6; i++)
         {
-            this->new_SEMI_GREEDY_MAXCUT();
+            this->new_SEMI_GREEDY_MAXCUT(alpha);
             tempLocal.second = make_pair(this->member_S, this->member_S_bar);
             tempLocal = this->new_LOCAL_SEARCH_MAXCUT(tempLocal.second);
             tempW = tempLocal.first;
@@ -602,6 +606,7 @@ public:
                 tempStar = tempLocal.second;
             }
         }
+        cout << alpha << ' ';
         return wStar;
     }
 
@@ -644,7 +649,9 @@ int main(int argc, char *argv[])
     MaxCut boss(&g);
 
     // cout << boss.GRASP_PR_MAXCUT() << '\n';
-    cout << boss.GRASP_MAXCUT() << '\n';
+    for(double alpha = 0.1; alpha <= 1.00; alpha += 0.1) {
+        cout << boss.GRASP_MAXCUT(alpha) << '\n';
+    }
 
     return 0;
 }

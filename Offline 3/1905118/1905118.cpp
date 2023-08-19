@@ -33,22 +33,26 @@ public:
         this->maxWeightedEdge = LLONG_MIN;
         this->weights.resize(this->nodeCount + 1);
         this->edges.reserve(edgeCount);
-
-        for (int i = 1; i <= nodeCount; i++)
-        {
-            for (int j = 1; j <= nodeCount; j++)
-            {
-                this->weights[i][j] = LLONG_MIN;
-            }
-        }
     }
 
     void addEdge(int u, int v, ll w)
-    {        
-        this->weights[v][u] = this->weights[u][v] = max(w, this->weights[u][v]);
+    {
+        if (this->weights[u].find(v) == this->weights[u].end())
+        {
+            this->weights[v][u] = this->weights[u][v] = w;
+            this->edges.emplace_back(make_pair(u, v));
+        }
+        else
+        {
+            this->weights[v][u] = this->weights[u][v] = max(w, this->weights[u][v]);
+        }
         this->minWeightedEdge = min(this->minWeightedEdge, w);
         this->maxWeightedEdge = max(this->maxWeightedEdge, w);
-        this->edges.emplace_back(make_pair(u, v));
+    }
+
+    map<int, ll> getAdjListWeights(int i)
+    {
+        return this->weights[i];
     }
 
     int getNodeCount()
@@ -63,7 +67,7 @@ public:
 
     ll getWeight(int u, int v)
     {
-        if (this->weights[u][v] == LLONG_MIN)
+        if (this->weights[u].find(v) == this->weights[u].end())
         {
             return 0;
         }
@@ -217,7 +221,8 @@ private:
         ll tempW = 0;
         bool change = true;
         int localIterationCnt = 0;
-        
+        map<int, ll> tempMap;
+
         while (change)
         {
             localIterationCnt++;
@@ -233,11 +238,16 @@ private:
                         temp.first.erase(i);
                         get<0>(this->sigmas[i]) = 2;
                         change = true;
-
-                        for (int j = 1; j <= nodeCount; j++)
+                        // for (int j = 1; j <= nodeCount; j++)
+                        // {
+                        //     get<2>(this->sigmas[j]) -= this->g->getWeight(j, i);
+                        //     get<1>(this->sigmas[j]) += this->g->getWeight(j, i);
+                        // }
+                        tempMap = this->g->getAdjListWeights(i);
+                        for (auto it : tempMap)
                         {
-                            get<2>(this->sigmas[j]) -= this->g->getWeight(j, i);
-                            get<1>(this->sigmas[j]) += this->g->getWeight(j, i);
+                            get<2>(this->sigmas[it.first]) -= it.second;
+                            get<1>(this->sigmas[it.first]) += it.second;
                         }
 
                         break;
@@ -251,11 +261,16 @@ private:
                         temp.second.erase(i);
                         get<0>(this->sigmas[i]) = 1;
                         change = true;
-
-                        for (int j = 1; j <= nodeCount; j++)
+                        // for (int j = 1; j <= nodeCount; j++)
+                        // {
+                        //     get<1>(this->sigmas[j]) -= this->g->getWeight(j, i);
+                        //     get<2>(this->sigmas[j]) += this->g->getWeight(j, i);
+                        // }
+                        tempMap = this->g->getAdjListWeights(i);
+                        for (auto it : tempMap)
                         {
-                            get<1>(this->sigmas[j]) -= this->g->getWeight(j, i);
-                            get<2>(this->sigmas[j]) += this->g->getWeight(j, i);
+                            get<1>(this->sigmas[it.first]) -= it.second;
+                            get<2>(this->sigmas[it.first]) += it.second;
                         }
 
                         break;
@@ -264,14 +279,29 @@ private:
             }
         }
 
-        for (int i = 1; i <= nodeCount; i++)
+        if (temp.first.size() > temp.second.size())
         {
-            if (get<0>(this->sigmas[i]) == 1)
+            for (int i : temp.second)
+            {
+                tempW += get<2>(this->sigmas[i]);
+            }
+        }
+        else
+        {
+            for (int i : temp.first)
             {
                 tempW += get<1>(this->sigmas[i]);
             }
-        } 
+        }
+        // for (int i = 1; i <= nodeCount; i++)
+        // {
+        //     if (get<0>(this->sigmas[i]) == 1)
+        //     {
+        //         tempW += get<1>(this->sigmas[i]);
+        //     }
+        // }
         // cout << localIterationCnt << ' ';
+        assert(tempW == this->g->getMaxCutWeight(temp.first, temp.second));
         return make_pair(tempW, temp);
     }
 
@@ -367,17 +397,19 @@ public:
     void new_SEMI_GREEDY_MAXCUT(double alpha)
     {
         int nodeCount = this->g->getNodeCount();
+        map<int, ll> tempMap;
         this->member_S.clear();
         this->member_S_bar.clear();
+        set<int> remainingNodes;
         for (int i = 1; i <= nodeCount; i++)
         {
             get<0>(this->sigmas[i]) = 0;
             get<1>(this->sigmas[i]) = 0;
             get<2>(this->sigmas[i]) = 0;
+            remainingNodes.emplace(i);
         }
 
         ll wMin = this->g->getMinWeightedEdege(), wMax = this->g->getMaxWeightedEdege();
-        // double alpha = dist(gen);
         double miu = wMin + (alpha * (wMax - wMin));
         vector<pair<int, int>> edges = this->g->getEdges();
         vector<pair<int, int>> edgesRCL;
@@ -394,21 +426,47 @@ public:
 
         this->member_S.emplace(randomEdge.first);
         get<0>(this->sigmas[randomEdge.first]) = 1;
+        remainingNodes.erase(randomEdge.first);
         this->member_S_bar.emplace(randomEdge.second);
         get<0>(this->sigmas[randomEdge.second]) = 2;
+        remainingNodes.erase(randomEdge.second);
 
         int remainingNodesCount = nodeCount - 2;
         wMin = LLONG_MAX;
         wMax = LLONG_MIN;
 
-        for (int i = 1; i <= nodeCount; i++)
+        // for (int i = 1; i <= nodeCount; i++)
+        // {
+        //     get<1>(this->sigmas[i]) = this->g->getSigmaX(i, this->member_S_bar);
+        //     get<2>(this->sigmas[i]) = this->g->getSigmaY(i, this->member_S);
+        //     if (get<0>(this->sigmas[i]) == 0)
+        //     {
+        //         wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+        //         wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+        //     }
+        // }
+
+        tempMap = this->g->getAdjListWeights(randomEdge.first);
+
+        for (auto it : tempMap)
         {
-            get<1>(this->sigmas[i]) = this->g->getSigmaX(i, this->member_S_bar);
-            get<2>(this->sigmas[i]) = this->g->getSigmaY(i, this->member_S);
-            if (get<0>(this->sigmas[i]) == 0)
+            get<2>(this->sigmas[it.first]) += it.second;
+            if (get<0>(this->sigmas[it.first]) == 0)
             {
-                wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
-                wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+                wMin = min(wMin, min(get<1>(this->sigmas[it.first]), get<2>(this->sigmas[it.first])));
+                wMax = max(wMax, max(get<1>(this->sigmas[it.first]), get<2>(this->sigmas[it.first])));
+            }
+        }
+
+        tempMap = this->g->getAdjListWeights(randomEdge.second);
+
+        for (auto it : tempMap)
+        {
+            get<1>(this->sigmas[it.first]) += it.second;
+            if (get<0>(this->sigmas[it.first]) == 0)
+            {
+                wMin = min(wMin, min(get<1>(this->sigmas[it.first]), get<2>(this->sigmas[it.first])));
+                wMax = max(wMax, max(get<1>(this->sigmas[it.first]), get<2>(this->sigmas[it.first])));
             }
         }
 
@@ -421,9 +479,17 @@ public:
             wMin = LLONG_MAX;
             wMax = LLONG_MIN;
 
-            for (int i = 1; i <= nodeCount; i++)
+            // for (int i = 1; i <= nodeCount; i++)
+            // {
+            //     if ((get<0>(this->sigmas[i]) == 0) && (max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])) >= miu))
+            //     {
+            //         nodesRCL.emplace_back(i);
+            //     }
+            // }
+
+            for (int i : remainingNodes)
             {
-                if ((get<0>(this->sigmas[i]) == 0) && (max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])) >= miu))
+                if (max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])) >= miu)
                 {
                     nodesRCL.emplace_back(i);
                 }
@@ -433,23 +499,35 @@ public:
             uniform_int_distribution<> randomIntPickDist(0, nodesRCL.size() - 1);
 
             int randomNode = nodesRCL[randomIntPickDist(gen)];
-
+            remainingNodes.erase(randomNode);
             if (get<1>(this->sigmas[randomNode]) > get<2>(this->sigmas[randomNode]))
             {
                 this->member_S.emplace(randomNode);
                 get<0>(this->sigmas[randomNode]) = 1;
-                for (int i = 1; i <= nodeCount; i++)
+                // for (int i = 1; i <= nodeCount; i++)
+                // {
+                //     get<2>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                // }
+                tempMap = this->g->getAdjListWeights(randomNode);
+
+                for (auto it : tempMap)
                 {
-                    get<2>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                    get<2>(this->sigmas[it.first]) += it.second;
                 }
             }
             else
             {
                 this->member_S_bar.emplace(randomNode);
                 get<0>(this->sigmas[randomNode]) = 2;
-                for (int i = 1; i <= nodeCount; i++)
+                // for (int i = 1; i <= nodeCount; i++)
+                // {
+                //     get<1>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                // }
+                tempMap = this->g->getAdjListWeights(randomNode);
+
+                for (auto it : tempMap)
                 {
-                    get<1>(this->sigmas[i]) += this->g->getWeight(i, randomNode);
+                    get<1>(this->sigmas[it.first]) += it.second;
                 }
             }
 
@@ -458,13 +536,10 @@ public:
                 break;
             }
 
-            for (int i = 1; i <= nodeCount; i++)
+            for (int i : remainingNodes)
             {
-                if (get<0>(this->sigmas[i]) == 0)
-                {
-                    wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
-                    wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
-                }
+                wMin = min(wMin, min(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
+                wMax = max(wMax, max(get<1>(this->sigmas[i]), get<2>(this->sigmas[i])));
             }
         }
 
@@ -592,7 +667,7 @@ public:
 
         // double alpha = dist(gen);
 
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 10; i++)
         {
             this->new_SEMI_GREEDY_MAXCUT(alpha);
             tempLocal.second = make_pair(this->member_S, this->member_S_bar);
@@ -649,9 +724,9 @@ int main(int argc, char *argv[])
     MaxCut boss(&g);
 
     // cout << boss.GRASP_PR_MAXCUT() << '\n';
-    for(double alpha = 0.1; alpha <= 1.00; alpha += 0.1) {
-        cout << boss.GRASP_MAXCUT(alpha) << '\n';
-    }
+    // for(double alpha = 0.1; alpha <= 1.00; alpha += 0.1) {
+    cout << boss.GRASP_MAXCUT(dist(gen)) << '\n';
+    // }
 
     return 0;
 }

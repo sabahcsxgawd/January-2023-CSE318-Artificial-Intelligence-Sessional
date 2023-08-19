@@ -2,6 +2,7 @@
     "files.associations": {
         "iosfwd": "cpp",
         "*.tcc": "cpp",
-        "tuple": "cpp"
+        "tuple": "cpp",
+        "iostream": "cpp"
     }
 }

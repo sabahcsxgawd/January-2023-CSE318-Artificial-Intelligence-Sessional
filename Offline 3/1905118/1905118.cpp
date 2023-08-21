@@ -517,6 +517,8 @@ public:
             }
         }
         cout << 'G' << fileID << ','
+             << this->g->getNodeCount() << ','
+             << this->g->getEdgeCount() << ','
              << alpha << ','
              << this->GREEDY_W << ','
              << (this->RAND_CUM_W / GRASP_ITERATION) << ','

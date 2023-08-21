@@ -594,14 +594,13 @@ int main(int argc, char *argv[])
 
     int GRASP_ITERATIONS[] = {20, 50, 100, 500, 1000};
 
-    // for (double alpha = 0.0; alpha <= 1.00; alpha += 0.1)
-    // {
-    //     for (int i = 0; i < ((sizeof(GRASP_ITERATIONS)) / (sizeof(GRASP_ITERATIONS[0]))); i++)
-    //     {
-            // boss.GRASP_MAXCUT(atoi(argv[1]), GRASP_ITERATIONS[i], alpha);
-            cout << boss.GREEDY_MAXCUT() << '\n';
-    //     }
-    // }
+    for (double alpha = 0.0; alpha <= 1.00; alpha += 0.1)
+    {
+        for (int i = 0; i < ((sizeof(GRASP_ITERATIONS)) / (sizeof(GRASP_ITERATIONS[0]))); i++)
+        {
+            boss.GRASP_MAXCUT(atoi(argv[1]), GRASP_ITERATIONS[i], alpha);
+        }
+    }
 
     return 0;
 }

@@ -1,2 +1,4 @@
 #! /usr/bin/bash
-git add -all
+git add --all
+git commit -m "$1"
+git push -u origin master

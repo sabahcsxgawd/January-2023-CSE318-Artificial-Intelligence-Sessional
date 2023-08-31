@@ -12,13 +12,24 @@ private:
 public:
     Node(const Node &) = delete;
 
-    Node(int attributeIndex, string exampleBitMap) {
-        this->attributeIndex= attributeIndex;
+    Node(string exampleBitMap) {
         this->exampleBitMap = exampleBitMap;
+    }
+
+    void setAttributeIndex(int attributeIndex) {
+        this->attributeIndex = attributeIndex;
     }
 
     void addChildren(Node *node) {
         this->children.emplace_back(node);
+    }
+
+    int getAttrIndex() {
+        return this->attributeIndex;
+    }
+
+    vector<Node*> getChildren() {
+        return this->children;
     }
 };
 
@@ -29,6 +40,7 @@ private:
     int howManyAttrs, howManyExamples, goalIndex;
     vector<vector<int>> trainingData, testData; // training is actually examples
     vector<int> howManyValsPerAttr;
+    map<int, string> goalClassValues;
     
     Node *root;
 
@@ -67,6 +79,38 @@ private:
         }
         entropy = myLog(total) - (multPart / total);
         return entropy;
+    }
+
+    Node* getPluralityValue(const string &s) {
+        vector<int> goalClassValues(this->howManyValsPerAttr[this->goalIndex], 0);
+        int i = 0;
+        for(char c : s) {
+            if(c == '1') {
+                goalClassValues[this->trainingData[i][goalIndex]]++;
+            }
+            i++;
+        }
+        int maxGoalClassIndex = 0;
+        for(i = 1; i < goalClassValues.size(); i++) {
+            if(goalClassValues[i] > goalClassValues[maxGoalClassIndex]) {
+                maxGoalClassIndex = i;
+            }
+        }
+        Node *rv = new Node(this->goalClassValues[maxGoalClassIndex]);
+        rv->setAttributeIndex(maxGoalClassIndex);
+        return rv;
+    }
+
+    void freeMemory(Node *root) {
+        if(root->getAttrIndex() == this->goalIndex) {
+            delete root;
+        }
+        else {
+            for(Node *child : root->getChildren()) {
+                freeMemory(child);
+            }
+            delete root;
+        }
     }
 
 public:
@@ -113,11 +157,16 @@ public:
         mt19937 gen(rd());
         uniform_int_distribution<> dist(1, 100);
 
+        this->howManyAttrs = this->goalIndex = tempData[0].size() - 1;
+
         for (int i = 0; i < tempData.size(); i++)
         {
             for (int j = 0; j < tempData[i].size(); j++)
             {
                 replaceAttrValues.emplace_back(attrValMapper[{j, tempData[i][j]}]);
+                if(j == this->goalIndex && this->goalClassValues.find(replaceAttrValues.back()) == this->goalClassValues.end()) {
+                    this->goalClassValues[replaceAttrValues.back()] = tempData[i][j];
+                }
             }
             if (dist(gen) > 80)
             {
@@ -132,10 +181,9 @@ public:
 
         // assuming all examples have all attributes
         this->howManyExamples = this->trainingData.size();
-        this->howManyAttrs = this->goalIndex = this->trainingData[0].size() - 1;
-        this->howManyValsPerAttr.resize(this->howManyAttrs);
+        this->howManyValsPerAttr.resize(this->howManyAttrs + 1);
 
-        for (int i = 0; i < this->howManyAttrs; i++)
+        for (int i = 0; i <= this->howManyAttrs; i++)
         {
             this->howManyValsPerAttr[i] = attrValMapper2[i];
         }
@@ -144,15 +192,30 @@ public:
     }
 
     Node* learnByInfoGain(string exampleBitMap, string attributeBitMap, string parentExampleBitMap) {
+        if(this->isEmpty(exampleBitMap)) {
+            return this->getPluralityValue(parentExampleBitMap);
+        }
+        // else if() {
 
+        // }
+        else if(this->isEmpty(attributeBitMap)) {
+            return this->getPluralityValue(exampleBitMap);
+        }
+        else {
+
+        }
+        return NULL;
     }
 
     void learn() {
         string exampleBitMap(this->howManyExamples, '1');
         string attributeBitMap(this->howManyAttrs, '1');
         string parentExampleBitMap(this->howManyExamples, '1');
-        cout << howManyAttrs;
         this->root = learnByInfoGain(exampleBitMap, attributeBitMap, parentExampleBitMap);
+    }
+
+    void free() {
+        this->freeMemory(this->root);
     }
 
 };

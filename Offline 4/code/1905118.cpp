@@ -6,7 +6,8 @@ class DecisionTree
 
 private:
     int howManyAttrs, howManyExamples, goalIndex;
-    vector<vector<int>> howManyValsPerAttr, trainingData, testData; // training is actually examples
+    vector<vector<int>> trainingData, testData; // training is actually examples
+    vector<int> howManyValsPerAttr;
 
     bool isEmpty(const string &s)
     {
@@ -84,17 +85,17 @@ public:
         this->trainingData.clear();
         this->testData.clear();
 
-        // TODO need to split test and training
         random_device rd;
         mt19937 gen(rd());        
         uniform_int_distribution<> dist(1, 100);
+        
         for (int i = 0; i < tempData.size(); i++)
         {
             for (int j = 0; j < tempData[i].size(); j++)
             {
                 replaceAttrValues.emplace_back(attrValMapper[{j, tempData[i][j]}]);
             }
-            if(dist(gen) > 20) {
+            if(dist(gen) > 80) {
                 this->testData.emplace_back(replaceAttrValues);
             }
             else {
@@ -102,16 +103,16 @@ public:
             }
             replaceAttrValues.clear();
         }
-
-        for(auto x : this->testData) {
-            for(int y : x) {
-                cout << y << ' ';
-            }
-            cout << '\n';
-        }
-
+       
         // assuming all examples have all attributes
         this->howManyExamples = this->trainingData.size();
+        this->howManyAttrs = this->goalIndex = this->trainingData[0].size() - 1;
+        this->howManyValsPerAttr.resize(this->howManyAttrs);
+        cout << this->howManyExamples << ' ' << this->howManyAttrs << ' ' << this->goalIndex << '\n';
+        for(int i = 0; i < this->howManyAttrs; i++) {
+            this->howManyValsPerAttr[i] = attrValMapper2[i];
+            cout << this->howManyValsPerAttr[i] << ' ';
+        }
         inFile.close();
     }
 };

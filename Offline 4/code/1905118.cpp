@@ -57,7 +57,7 @@ public:
     {
         // asssuming test data is in same folder with correct file name
         ifstream inFile(data);
-        string line, token;        
+        string line, token;
         vector<int> replaceAttrValues;
         vector<string> tempAttrValues;
         vector<vector<string>> tempData;
@@ -65,37 +65,53 @@ public:
         map<int, int> attrValMapper2;
         stringstream ss;
         while (getline(inFile, line))
-        {                       
+        {
             tempAttrValues.clear();
             int attrIndex = 0;
             ss.str(line);
             while (getline(ss, token, ','))
             {
                 tempAttrValues.emplace_back(token);
-                if(attrValMapper.find({attrIndex, token}) == attrValMapper.end()) {
+                if (attrValMapper.find({attrIndex, token}) == attrValMapper.end())
+                {
                     attrValMapper[{attrIndex, token}] = attrValMapper2[attrIndex]++;
                 }
-                attrIndex++;      
-            }  
+                attrIndex++;
+            }
             ss.clear();
             tempData.emplace_back(tempAttrValues);
         }
         this->trainingData.clear();
-        this->testData.clear();    
-        for(int i = 0; i < tempData.size(); i++) {
-            for(int j = 0; j < tempData[i].size(); j++) {
+        this->testData.clear();
+
+        // TODO need to split test and training
+        random_device rd;
+        mt19937 gen(rd());        
+        uniform_int_distribution<> dist(1, 100);
+        for (int i = 0; i < tempData.size(); i++)
+        {
+            for (int j = 0; j < tempData[i].size(); j++)
+            {
                 replaceAttrValues.emplace_back(attrValMapper[{j, tempData[i][j]}]);
             }
-            this->trainingData.emplace_back(replaceAttrValues);
+            if(dist(gen) > 20) {
+                this->testData.emplace_back(replaceAttrValues);
+            }
+            else {
+                this->trainingData.emplace_back(replaceAttrValues);
+            }
             replaceAttrValues.clear();
         }
 
-        for(auto x : this->trainingData) {
+        for(auto x : this->testData) {
             for(int y : x) {
                 cout << y << ' ';
             }
             cout << '\n';
         }
+
+        // assuming all examples have all attributes
+        this->howManyExamples = this->trainingData.size();
         inFile.close();
     }
 };

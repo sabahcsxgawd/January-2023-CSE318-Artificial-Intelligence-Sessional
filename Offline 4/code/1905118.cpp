@@ -53,47 +53,56 @@ public:
         this->howManyAttrs = this->howManyExamples = this->goalIndex = 0;
     }
 
-    DecisionTree(const string &data)
+    void feedData(const string &data)
     {
         // asssuming test data is in same folder with correct file name
         ifstream inFile(data);
-        string line, token;
-        stringstream ss;
+        string line, token;        
+        vector<int> replaceAttrValues;
         vector<string> tempAttrValues;
+        vector<vector<string>> tempData;
         map<pair<int, string>, int> attrValMapper;
+        map<int, int> attrValMapper2;
+        stringstream ss;
         while (getline(inFile, line))
-        {
-            ss.str(line);
-            this->howManyExamples++;
+        {                       
             tempAttrValues.clear();
+            int attrIndex = 0;
+            ss.str(line);
             while (getline(ss, token, ','))
             {
-                tempAttrValues.push_back(token);
-                if (this->howManyExamples == 1)
-                {
-                    this->howManyAttrs++;
-                    // TODO
+                tempAttrValues.emplace_back(token);
+                if(attrValMapper.find({attrIndex, token}) == attrValMapper.end()) {
+                    attrValMapper[{attrIndex, token}] = attrValMapper2[attrIndex]++;
                 }
-            }
+                attrIndex++;      
+            }  
+            ss.clear();
+            tempData.emplace_back(tempAttrValues);
         }
+        this->trainingData.clear();
+        this->testData.clear();    
+        for(int i = 0; i < tempData.size(); i++) {
+            for(int j = 0; j < tempData[i].size(); j++) {
+                replaceAttrValues.emplace_back(attrValMapper[{j, tempData[i][j]}]);
+            }
+            this->trainingData.emplace_back(replaceAttrValues);
+            replaceAttrValues.clear();
+        }
+
+        for(auto x : this->trainingData) {
+            for(int y : x) {
+                cout << y << ' ';
+            }
+            cout << '\n';
+        }
+        inFile.close();
     }
 };
 
 int main(void)
 {
-    ifstream inFile("car.data");
-    string line, token;
-    stringstream ss;
-    while (getline(inFile, line))
-    {
-        cout << line << '\n';
-        ss.str(line);
-        while (getline(ss, token, ','))
-        {
-            cout << token << '|';
-        }
-        break;
-    }
-    inFile.close();
+    DecisionTree d;
+    d.feedData("car.data");
     return 0;
 }

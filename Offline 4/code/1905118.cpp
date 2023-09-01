@@ -6,20 +6,24 @@ class Node
 
 private:
     int attributeIndex;
-    string exampleBitMap;
+    string outcome;
     vector<Node *> children;
 
 public:
     Node(const Node &) = delete;
 
-    Node(string exampleBitMap)
+    Node()
     {
-        this->exampleBitMap = exampleBitMap;
+        this->outcome = "";
     }
 
     void setAttributeIndex(int attributeIndex)
     {
         this->attributeIndex = attributeIndex;
+    }
+
+    void setOutcome(const string &outcome) {
+        this->outcome = outcome;
     }
 
     void addChildren(Node *node)
@@ -35,6 +39,14 @@ public:
     vector<Node *> getChildren()
     {
         return this->children;
+    }
+
+    ~Node() {
+        for(Node *child : this->children) {
+            if(child != NULL) {
+                delete child;
+            }
+        }
     }
 };
 
@@ -79,13 +91,53 @@ private:
         total = multPart = 0.0;
         for (int x : v)
         {
-            total += (double)x;
+            total += (double)x; 
+            if(total == 0)
             multPart += ((double)x * myLog(x));
         }
+
+        if(total == 0) {
+            return 0;
+        }
+
         entropy = myLog(total) - (multPart / total);
         return entropy;
     }
 
+    double getInitialEntropy(const string &exampleBitMap)
+    {
+        vector<int> goalClassValues(this->howManyValsPerAttr[this->goalIndex], 0);
+        int i = 0;    
+        for (char c : exampleBitMap)
+        {
+            if (c == '1')
+            {
+                goalClassValues[this->trainingData[i][goalIndex]]++;
+            }
+            i++;
+        }
+   
+        return this->getEntropy(goalClassValues);
+    }
+
+    double getRemainder(const int attributeIndex, const string &exampleBitMap) {
+        vector<vector<int>> subsetData(this->howManyValsPerAttr[attributeIndex], vector<int>(this->howManyValsPerAttr[this->goalIndex], 0));
+        int i = 0, cnt = 0;
+        for(char c : exampleBitMap) {
+            if(c == '1') {
+                subsetData[this->trainingData[i][attributeIndex]][this->trainingData[i][this->goalIndex]]++;
+                cnt++;
+            }
+            i++;
+        }
+        double remainder = 0.0;
+
+        for(auto v : subsetData) {
+            remainder += ((accumulate(v.begin(), v.end(), 0) * 1.0 / cnt) * this->getEntropy(v));
+        }
+        return remainder;
+    }
+    
     Node *getPluralityValue(const string &exampleBitMap)
     {
         vector<int> goalClassValues(this->howManyValsPerAttr[this->goalIndex], 0);
@@ -106,8 +158,9 @@ private:
                 maxGoalClassIndex = i;
             }
         }
-        Node *rv = new Node(this->goalClassValues[maxGoalClassIndex]);
+        Node *rv = new Node();
         rv->setAttributeIndex(maxGoalClassIndex);
+        rv->setOutcome(this->goalClassValues[maxGoalClassIndex]);
         return rv;
     }
 
@@ -134,25 +187,6 @@ private:
             i++;
         }
         return fixedGoalClassIndex;
-    }
-
-    void freeMemory(Node *root)
-    {
-        if (root != NULL)
-        {
-            if (root->getAttributeIndex() == this->goalIndex)
-            {
-                delete root;
-            }
-            else
-            {
-                for (Node *child : root->getChildren())
-                {
-                    freeMemory(child);
-                }
-                delete root;
-            }
-        }
     }
 
 public:
@@ -244,8 +278,9 @@ public:
         }
         else if ((sameGoalClass = this->isSameClassification(exampleBitMap)) != -1)
         {
-            Node *rv = new Node(this->goalClassValues[sameGoalClass]);
+            Node *rv = new Node();
             rv->setAttributeIndex(this->goalIndex);
+            rv->setOutcome(this->goalClassValues[sameGoalClass]);
             return rv;
         }
         else if (this->isEmpty(attributeBitMap))
@@ -254,7 +289,38 @@ public:
         }
         else
         {
+            double entropyBefore = this->getInitialEntropy(exampleBitMap), infoGain, maxInfoGain = -DBL_MAX;
+            int i = 0, selectedAttributeIndex = -1;
+            for(char c : attributeBitMap) {
+                if(c == '1') {
+                    infoGain = entropyBefore - this->getRemainder(i, exampleBitMap);
+                    if(infoGain > maxInfoGain) {
+                        selectedAttributeIndex = i;
+                        maxInfoGain = infoGain;
+                    }
+                }
+                i++;
+            }
+            cout << selectedAttributeIndex << ' ' << infoGain << '\n';
+            assert(selectedAttributeIndex != -1);
+            Node *rv = new Node();
+            rv->setAttributeIndex(selectedAttributeIndex);
+            attributeBitMap[selectedAttributeIndex] = '0';
+            for(int j = 0; j < this->howManyValsPerAttr[selectedAttributeIndex]; j++) {
+                i = 0;
+                string newExampleBitMap = exampleBitMap;
+                for(char c : exampleBitMap) {
+                    if(c == '1' && this->trainingData[i][selectedAttributeIndex] != j) {
+                        newExampleBitMap[i] = '0';
+                    }
+                    i++;
+                }
+                rv->addChildren(this->learnByInfoGain(newExampleBitMap, attributeBitMap, exampleBitMap));
+            }
+            return rv;
         }
+
+        cout << "should not happen\n";
         return NULL;
     }
 
@@ -268,7 +334,7 @@ public:
 
     void free()
     {
-        this->freeMemory(this->root);
+        delete this->root;
     }
 };
 

@@ -64,7 +64,7 @@ class DecisionTree
 
 private:
     int howManyAttrs, howManyExamples, goalIndex;
-    double training_test_split;
+    double training_test_split_ratio;
     vector<vector<int>> trainingData, testData; // training is actually examples
     vector<int> howManyValsPerAttr;
     map<int, string> goalClassValues;
@@ -101,7 +101,7 @@ private:
         total = multPart = 0.0;
         for (int x : v)
         {
-            total += (double)x;        
+            total += (double)x;
             multPart += ((double)x * myLog(x));
         }
 
@@ -209,7 +209,7 @@ public:
     DecisionTree()
     {
         this->howManyAttrs = this->howManyExamples = this->goalIndex = 0;
-        this->training_test_split = 0.8;
+        this->training_test_split_ratio = 0.8;
         this->root = NULL;
     }
 
@@ -247,13 +247,13 @@ public:
 
         random_device rd;
         mt19937 gen(rd());
-        // mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+        mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
         uniform_real_distribution<> dist(0.0, 1.0);
 
         this->howManyAttrs = this->goalIndex = tempData[0].size() - 1;
 
         // ofstream outFile("car_data.csv");
-        // shuffle(tempData.begin(), tempData.end(), rng);
+        shuffle(tempData.begin(), tempData.end(), rng);
 
         for (int i = 0; i < tempData.size(); i++)
         {
@@ -291,7 +291,7 @@ public:
             this->howManyValsPerAttr[i] = attrValMapper2[i];
         }
 
-        inFile.close();        
+        inFile.close();
         // outFile.close();
     }
 
@@ -350,7 +350,7 @@ public:
                 rv->addChildren(this->learnByInfoGain(newExampleBitMap, attributeBitMap, exampleBitMap));
             }
             return rv;
-        }    
+        }
     }
 
     void learn()
@@ -377,7 +377,7 @@ public:
                 test = test->getChildren()[data[test->getAttributeIndex()]];
             }
         }
-      
+
         return (evalOutcome == originalOutcome) ? 1 : 0;
     }
 

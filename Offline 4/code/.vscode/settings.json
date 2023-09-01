@@ -3,6 +3,10 @@
         "iostream": "cpp",
         "iosfwd": "cpp",
         "sstream": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "numeric": "cpp",
+        "algorithm": "cpp",
+        "climits": "cpp",
+        "cfloat": "cpp"
     }
 }

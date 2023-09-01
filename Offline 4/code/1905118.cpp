@@ -64,6 +64,7 @@ class DecisionTree
 
 private:
     int howManyAttrs, howManyExamples, goalIndex;
+    double training_test_split;
     vector<vector<int>> trainingData, testData; // training is actually examples
     vector<int> howManyValsPerAttr;
     map<int, string> goalClassValues;
@@ -209,10 +210,11 @@ public:
     DecisionTree()
     {
         this->howManyAttrs = this->howManyExamples = this->goalIndex = 0;
+        this->training_test_split = 0.8;
         this->root = NULL;
     }
 
-    void feedData(const string &data)
+    void feedData(const string &data, double split_ratio=0.8)
     {
         // asssuming test data is in same folder with correct file name
         ifstream inFile(data);
@@ -246,7 +248,7 @@ public:
 
         random_device rd;
         mt19937 gen(rd());
-        uniform_int_distribution<> dist(1, 100);
+        uniform_real_distribution<> dist(0.0, 1.0);
 
         this->howManyAttrs = this->goalIndex = tempData[0].size() - 1;
 
@@ -260,7 +262,7 @@ public:
                     this->goalClassValues[replaceAttrValues.back()] = tempData[i][j];
                 }
             }
-            if (dist(gen) > 80)
+            if (dist(gen) > split_ratio)
             {
                 this->testData.emplace_back(replaceAttrValues);
             }
@@ -368,7 +370,7 @@ public:
                 test = test->getChildren()[data[test->getAttributeIndex()]];
             }
         }
-
+       
         return (evalOutcome == originalOutcome) ? 1 : 0;
     }
 
@@ -391,16 +393,37 @@ public:
 int main(int argc, char* argv[])
 {
     int TEST_COUNT = 20;
-    if(argc == 2) {
+    double split_ratio = 0.8;
+    if(argc > 1) {
         TEST_COUNT = atoi(argv[1]);
     }
+    if(argc > 2) {
+        split_ratio = stod(argv[2]);
+    }
+
+    double mean_Accuracy, SD_Accuracy;
+    mean_Accuracy = SD_Accuracy = 0.0;
+
     for (int i = 0; i < TEST_COUNT; i++)
     {
         DecisionTree d;
-        d.feedData("car.data");
+        d.feedData("car.data", split_ratio);
         d.learn();
-        cout << "Accuracy : " << d.evalTestData() << '\n';
+        double val = d.evalTestData();
+        mean_Accuracy += val;
+        SD_Accuracy += (val * val);
+        // cout << "Accuracy : " << val << '\n';
         d.free();
     }
+    
+    mean_Accuracy = mean_Accuracy / TEST_COUNT;
+    SD_Accuracy = sqrt((SD_Accuracy / TEST_COUNT) - (mean_Accuracy * mean_Accuracy));
+
+    cout << "Mean Accuracy : " << mean_Accuracy << '\n';
+    cout << "Standard Deviation of Accuracy : " << SD_Accuracy << '\n';
+
     return 0;
 }
+
+// TODO should i hardcode the possible values for attributes???
+// think of the case when nothing is found while evaluation

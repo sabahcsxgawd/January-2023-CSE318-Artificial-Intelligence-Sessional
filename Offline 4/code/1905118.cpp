@@ -214,7 +214,7 @@ public:
         this->root = NULL;
     }
 
-    void feedData(const string &data, double split_ratio=0.8)
+    void feedData(const string &data, double split_ratio = 0.8)
     {
         // asssuming test data is in same folder with correct file name
         ifstream inFile(data);
@@ -252,6 +252,8 @@ public:
 
         this->howManyAttrs = this->goalIndex = tempData[0].size() - 1;
 
+        // ofstream outFile("car_data.csv");
+
         for (int i = 0; i < tempData.size(); i++)
         {
             for (int j = 0; j < tempData[i].size(); j++)
@@ -261,6 +263,12 @@ public:
                 {
                     this->goalClassValues[replaceAttrValues.back()] = tempData[i][j];
                 }
+                // if(j < tempData[i].size() - 1) {
+                //     outFile << replaceAttrValues.back() << ',';
+                // }
+                // else {
+                //     outFile << replaceAttrValues.back() << '\n';
+                // }
             }
             if (dist(gen) > split_ratio)
             {
@@ -282,7 +290,8 @@ public:
             this->howManyValsPerAttr[i] = attrValMapper2[i];
         }
 
-        inFile.close();
+        inFile.close();        
+        // outFile.close();
     }
 
     Node *learnByInfoGain(string exampleBitMap, string attributeBitMap, string parentExampleBitMap)
@@ -354,7 +363,7 @@ public:
         this->root = learnByInfoGain(exampleBitMap, attributeBitMap, parentExampleBitMap);
     }
 
-    int eval(const vector<int> &data)
+    int predict(const vector<int> &data)
     {
         string originalOutcome = this->goalClassValues[data.back()], evalOutcome;
         Node *test = this->root;
@@ -370,16 +379,16 @@ public:
                 test = test->getChildren()[data[test->getAttributeIndex()]];
             }
         }
-       
+      
         return (evalOutcome == originalOutcome) ? 1 : 0;
     }
 
-    double evalTestData()
+    double predictTestData()
     {
         int correct = 0;
         for (auto data : this->testData)
         {
-            correct += this->eval(data);
+            correct += this->predict(data);
         }
         return (correct * 100.0 / this->testData.size());
     }
@@ -390,14 +399,16 @@ public:
     }
 };
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     int TEST_COUNT = 20;
     double split_ratio = 0.8;
-    if(argc > 1) {
+    if (argc > 1)
+    {
         TEST_COUNT = atoi(argv[1]);
     }
-    if(argc > 2) {
+    if (argc > 2)
+    {
         split_ratio = stod(argv[2]);
     }
 
@@ -409,13 +420,12 @@ int main(int argc, char* argv[])
         DecisionTree d;
         d.feedData("car.data", split_ratio);
         d.learn();
-        double val = d.evalTestData();
+        double val = d.predictTestData();
         mean_Accuracy += val;
         SD_Accuracy += (val * val);
-        // cout << "Accuracy : " << val << '\n';
         d.free();
     }
-    
+
     mean_Accuracy = mean_Accuracy / TEST_COUNT;
     SD_Accuracy = sqrt((SD_Accuracy / TEST_COUNT) - (mean_Accuracy * mean_Accuracy));
 

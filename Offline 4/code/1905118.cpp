@@ -36,6 +36,10 @@ public:
         return this->attributeIndex;
     }
 
+    string getOutcome() {
+        return this->outcome;
+    }
+
     vector<Node *> getChildren()
     {
         return this->children;
@@ -159,7 +163,7 @@ private:
             }
         }
         Node *rv = new Node();
-        rv->setAttributeIndex(maxGoalClassIndex);
+        rv->setAttributeIndex(goalIndex);
         rv->setOutcome(this->goalClassValues[maxGoalClassIndex]);
         return rv;
     }
@@ -301,7 +305,7 @@ public:
                 }
                 i++;
             }
-            cout << selectedAttributeIndex << ' ' << infoGain << '\n';
+
             assert(selectedAttributeIndex != -1);
             Node *rv = new Node();
             rv->setAttributeIndex(selectedAttributeIndex);
@@ -332,6 +336,27 @@ public:
         this->root = learnByInfoGain(exampleBitMap, attributeBitMap, parentExampleBitMap);
     }
 
+    void eval(const vector<int> &data) {
+        string originalOutcome = this->goalClassValues[data.back()], evalOutcome;
+        Node *test = this->root;
+        while(test != NULL) {
+            if(test->getAttributeIndex() == this->goalIndex) {
+                evalOutcome = test->getOutcome();
+                break;
+            }
+            else {
+                test = test->getChildren()[data[test->getAttributeIndex()]];
+            }
+        }
+        cout << evalOutcome << ' ' << originalOutcome << '\n';
+    }
+
+    void evalTestData() {
+        for(auto data : this->testData) {
+            this->eval(data);
+        }
+    }
+
     void free()
     {
         delete this->root;
@@ -343,6 +368,7 @@ int main(void)
     DecisionTree d;
     d.feedData("car.data");
     d.learn();
+    d.evalTestData();
     d.free();
     return 0;
 }

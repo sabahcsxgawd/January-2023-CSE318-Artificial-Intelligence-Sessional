@@ -388,9 +388,13 @@ public:
     }
 };
 
-int main(void)
+int main(int argc, char* argv[])
 {
-    for (int i = 0; i < 20; i++)
+    int TEST_COUNT = 20;
+    if(argc == 2) {
+        TEST_COUNT = atoi(argv[1]);
+    }
+    for (int i = 0; i < TEST_COUNT; i++)
     {
         DecisionTree d;
         d.feedData("car.data");

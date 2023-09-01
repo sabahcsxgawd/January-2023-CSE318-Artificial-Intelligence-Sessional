@@ -101,9 +101,8 @@ private:
         total = multPart = 0.0;
         for (int x : v)
         {
-            total += (double)x;
-            if (total == 0)
-                multPart += ((double)x * myLog(x));
+            total += (double)x;        
+            multPart += ((double)x * myLog(x));
         }
 
         if (total == 0)

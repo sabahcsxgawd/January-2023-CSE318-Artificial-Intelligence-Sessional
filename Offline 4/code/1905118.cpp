@@ -248,11 +248,13 @@ public:
 
         random_device rd;
         mt19937 gen(rd());
+        // mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
         uniform_real_distribution<> dist(0.0, 1.0);
 
         this->howManyAttrs = this->goalIndex = tempData[0].size() - 1;
 
         // ofstream outFile("car_data.csv");
+        // shuffle(tempData.begin(), tempData.end(), rng);
 
         for (int i = 0; i < tempData.size(); i++)
         {
@@ -349,10 +351,7 @@ public:
                 rv->addChildren(this->learnByInfoGain(newExampleBitMap, attributeBitMap, exampleBitMap));
             }
             return rv;
-        }
-
-        cout << "should not happen\n";
-        return NULL;
+        }    
     }
 
     void learn()
@@ -393,7 +392,7 @@ public:
         return (correct * 100.0 / this->testData.size());
     }
 
-    void free()
+    ~DecisionTree()
     {
         delete this->root;
     }
@@ -405,7 +404,7 @@ int main(int argc, char *argv[])
     double split_ratio = 0.8;
     if (argc > 1)
     {
-        TEST_COUNT = atoi(argv[1]);
+        TEST_COUNT = stoi(argv[1]);
     }
     if (argc > 2)
     {
@@ -423,7 +422,6 @@ int main(int argc, char *argv[])
         double val = d.predictTestData();
         mean_Accuracy += val;
         SD_Accuracy += (val * val);
-        d.free();
     }
 
     mean_Accuracy = mean_Accuracy / TEST_COUNT;

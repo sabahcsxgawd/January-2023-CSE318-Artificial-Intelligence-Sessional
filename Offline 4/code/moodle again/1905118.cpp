@@ -418,7 +418,7 @@ int main(int argc, char *argv[])
         DecisionTree d;
         d.feedData("car.data", split_ratio);
         d.learn();
-        double val = d.predictTestData();        
+        double val = d.predictTestData();
         mean_Accuracy += val;
         SD_Accuracy += (val * val);
     }
@@ -426,7 +426,6 @@ int main(int argc, char *argv[])
     mean_Accuracy = mean_Accuracy / TEST_COUNT;
     SD_Accuracy = sqrt((SD_Accuracy / TEST_COUNT) - (mean_Accuracy * mean_Accuracy));
 
-    // cout << split_ratio * 100.0 << ' ' << mean_Accuracy << '\n';
     cout << "Mean Accuracy : " << mean_Accuracy << '\n';
     cout << "Standard Deviation of Accuracy : " << SD_Accuracy << '\n';
 

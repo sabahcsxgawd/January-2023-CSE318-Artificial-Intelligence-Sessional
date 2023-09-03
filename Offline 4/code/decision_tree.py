@@ -17,7 +17,7 @@ X = pima[feature_cols] # Features
 y = pima['outcome']# Target variable
 
 # Split dataset into training set and test set
-X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2, random_state=1) # 70% training and 30% test
+X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, random_state=None)
 
 # Create Decision Tree classifer object
 clf = DecisionTreeClassifier(criterion="entropy", max_depth=6)
@@ -31,9 +31,9 @@ y_pred = clf.predict(X_test)
 
 # Model Accuracy, how often is the classifier correct?
 print("Accuracy:",metrics.accuracy_score(y_test, y_pred) * 100.0)
-fig = plt.figure(figsize=(30,18))
-tree.plot_tree(clf)
-fig.savefig("decistion_tree.png")
+# fig = plt.figure(figsize=(30,18))
+# tree.plot_tree(clf)
+# fig.savefig("decistion_tree.png")
 
 
 

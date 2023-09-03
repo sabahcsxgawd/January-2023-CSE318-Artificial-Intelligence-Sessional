@@ -7,6 +7,7 @@
         "numeric": "cpp",
         "algorithm": "cpp",
         "climits": "cpp",
-        "cfloat": "cpp"
+        "cfloat": "cpp",
+        "chrono": "cpp"
     }
 }
